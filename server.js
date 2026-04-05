@@ -121,7 +121,7 @@ setInterval(() => {
         r: 4,
         color: p.color,
       });
-      p.score = Math.max(0, p.score - 1);
+      p.score = Math.max(0, p.score - 2);
     }
 
     // Move head
