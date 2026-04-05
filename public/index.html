@@ -25,6 +25,8 @@
     .color-pick::-webkit-color-swatch{border:2px solid rgba(255,255,255,.2);border-radius:8px}
     .color-btn{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
     #snakePreview{margin:0 auto 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+    .ctrl-btn{padding:10px 14px;border-radius:12px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .2s}
+    .ctrl-btn.selected{border-color:#6EE7B7;color:#6EE7B7;background:rgba(110,231,183,.08)}
     .play-btn{display:block;width:260px;max-width:80vw;margin:8px auto 0;padding:13px;font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;border:none;border-radius:14px;background:linear-gradient(135deg,#6EE7B7,#3B82F6);color:#080816;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .play-btn:active{transform:scale(.98)}
     .controls-hint{margin-top:12px;color:rgba(255,255,255,.2);font-size:10px;line-height:1.8}
@@ -73,6 +75,14 @@
     <div class="section-label">Tus colores</div>
     <div id="colorEditor"></div>
     <canvas id="snakePreview" width="240" height="50"></canvas>
+    <div id="controlPicker" style="display:none">
+      <div class="section-label">Controles</div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="ctrl-btn selected" data-ctrl="joystick">🕹️ Joystick</button>
+        <button class="ctrl-btn" data-ctrl="touch">👆 Tactil</button>
+        <button class="ctrl-btn" data-ctrl="gyro">📱 Giroscopio</button>
+      </div>
+    </div>
     <button class="play-btn" id="playBtn">JUGAR</button>
     <div class="controls-hint" id="controlsHint">Mouse = direccion &middot; Click / Espacio = turbo<br>Recoge orbes de poder en el mapa</div>
     <div id="menuRanking" class="ranking-section"></div>
@@ -188,12 +198,12 @@ function showGameUI(){
   document.getElementById('leaderboard').classList.remove('hidden');
   document.getElementById('minimap').classList.remove('hidden');
   document.getElementById('boostBar').classList.remove('hidden');
-  if(isTouch){joystickArea.style.display='block';boostBtn.style.display='flex';if(gyroBtn)gyroBtn.style.display='flex';}
+  if(isTouch){boostBtn.style.display='flex';joystickArea.style.display=(controlMode==='joystick')?'block':'none';}
   playing=true;
 }
 function hideGameUI(){
   document.getElementById('hud').classList.add('hidden');
-  if(isTouch){joystickArea.style.display='none';boostBtn.style.display='none';if(gyroBtn)gyroBtn.style.display='none';}
+  if(isTouch){joystickArea.style.display='none';boostBtn.style.display='none';}
 }
 
 function startGame(){
@@ -209,6 +219,28 @@ document.getElementById('playBtn2').onclick=function(){
 };
 nameInput.onkeydown=function(e){if(e.key==='Enter')startGame();};
 
+// ── Control mode: 'joystick' | 'touch' | 'gyro' ──
+var controlMode='joystick';
+var inputAngle=0;
+var gyroReady=false;
+var touchAngle=0;
+var joyAngle=0;
+
+// Control picker UI
+var controlPicker=document.getElementById('controlPicker');
+if(isTouch) controlPicker.style.display='block';
+var ctrlBtns=document.querySelectorAll('.ctrl-btn');
+for(var ci=0;ci<ctrlBtns.length;ci++){
+  (function(btn){
+    btn.onclick=function(){
+      for(var j=0;j<ctrlBtns.length;j++) ctrlBtns[j].classList.remove('selected');
+      btn.classList.add('selected');
+      controlMode=btn.getAttribute('data-ctrl');
+      if(controlMode==='gyro') requestGyro();
+    };
+  })(ctrlBtns[ci]);
+}
+
 // Desktop input
 canvas.onmousemove=function(e){if(!isTouch){mouseX=e.clientX;mouseY=e.clientY;}};
 window.addEventListener('mousedown',function(){if(!isTouch)boosting=true;});
@@ -216,8 +248,8 @@ window.addEventListener('mouseup',function(){if(!isTouch)boosting=false;});
 window.addEventListener('keydown',function(e){if(e.code==='Space'){boosting=true;e.preventDefault();}});
 window.addEventListener('keyup',function(e){if(e.code==='Space')boosting=false;});
 
-// Mobile joystick
-var joyTouchId=null,joyAngle=0;
+// ── Joystick ──
+var joyTouchId=null;
 function joyMove(cx,cy){
   var r=joystickArea.getBoundingClientRect();
   var dx=cx-r.left-r.width/2,dy=cy-r.top-r.height/2;
@@ -227,68 +259,57 @@ function joyMove(cx,cy){
   if(d>8) joyAngle=Math.atan2(dy,dx);
 }
 function joyReset(){joystickThumb.style.transform='translate(-50%,-50%)';joyTouchId=null;}
-joystickArea.addEventListener('touchstart',function(e){e.preventDefault();var t=e.changedTouches[0];joyTouchId=t.identifier;joyMove(t.clientX,t.clientY);},{passive:false});
-joystickArea.addEventListener('touchmove',function(e){e.preventDefault();for(var i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joyTouchId){joyMove(e.changedTouches[i].clientX,e.changedTouches[i].clientY);break;}}},{passive:false});
+joystickArea.addEventListener('touchstart',function(e){e.preventDefault();if(controlMode!=='joystick')return;var t=e.changedTouches[0];joyTouchId=t.identifier;joyMove(t.clientX,t.clientY);},{passive:false});
+joystickArea.addEventListener('touchmove',function(e){e.preventDefault();if(controlMode!=='joystick')return;for(var i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joyTouchId){joyMove(e.changedTouches[i].clientX,e.changedTouches[i].clientY);break;}}},{passive:false});
 joystickArea.addEventListener('touchend',function(e){for(var i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===joyTouchId){joyReset();break;}}});
 joystickArea.addEventListener('touchcancel',joyReset);
-canvas.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
-canvas.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
 
-// ── Gyroscope control ──
-var useGyro=false;
+// ── Touch (tap anywhere on screen) ──
+var moveTouchId=null;
+canvas.addEventListener('touchstart',function(e){
+  e.preventDefault();
+  if(controlMode!=='touch'||!playing)return;
+  var t=e.changedTouches[0];moveTouchId=t.identifier;
+  touchAngle=Math.atan2(t.clientY-H/2,t.clientX-W/2);
+},{passive:false});
+canvas.addEventListener('touchmove',function(e){
+  e.preventDefault();
+  if(controlMode!=='touch'||!playing)return;
+  for(var i=0;i<e.changedTouches.length;i++){
+    if(e.changedTouches[i].identifier===moveTouchId){
+      touchAngle=Math.atan2(e.changedTouches[i].clientY-H/2,e.changedTouches[i].clientX-W/2);break;
+    }
+  }
+},{passive:false});
+canvas.addEventListener('touchend',function(e){
+  for(var i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===moveTouchId){moveTouchId=null;break;}}
+});
+
+// ── Gyroscope ──
 var gyroAngle=0;
-var hasGyro=false;
-
-function enableGyro(){
-  // iOS 13+ requires permission
+function requestGyro(){
+  if(gyroReady)return;
   if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-    DeviceOrientationEvent.requestPermission().then(function(response){
-      if(response==='granted'){hasGyro=true;useGyro=true;updateGyroUI();}
-    }).catch(function(){});
+    DeviceOrientationEvent.requestPermission().then(function(r){if(r==='granted')gyroReady=true;}).catch(function(){});
   } else {
-    hasGyro=true;useGyro=true;updateGyroUI();
+    gyroReady=true;
   }
 }
-
 window.addEventListener('deviceorientation',function(e){
-  if(!useGyro||!playing)return;
-  // beta = front-back tilt (-180 to 180), gamma = left-right tilt (-90 to 90)
-  var gamma=e.gamma||0; // left-right
-  var beta=e.beta||0;   // front-back
-  // Offset so holding phone ~45deg forward is neutral
-  beta=beta-40;
-  // Clamp
+  if(controlMode!=='gyro'||!playing)return;
+  var gamma=e.gamma||0,beta=(e.beta||0)-40;
   gamma=Math.max(-45,Math.min(45,gamma));
   beta=Math.max(-45,Math.min(45,beta));
-  // Convert to angle (gamma=X, beta=Y)
   gyroAngle=Math.atan2(beta,gamma);
 });
 
-// Toggle button
-var gyroBtn=null;
-function updateGyroUI(){
-  if(!gyroBtn)return;
-  if(useGyro){
-    gyroBtn.style.background='rgba(110,231,183,.3)';gyroBtn.style.borderColor='rgba(110,231,183,.6)';
-    joystickArea.style.opacity='0.3';
-  } else {
-    gyroBtn.style.background='rgba(255,255,255,.05)';gyroBtn.style.borderColor='rgba(255,255,255,.15)';
-    joystickArea.style.opacity='1';
-  }
-}
-if(isTouch){
-  gyroBtn=document.createElement('button');
-  gyroBtn.textContent='🔄';
-  gyroBtn.title='Giroscopio';
-  gyroBtn.style.cssText='position:fixed;bottom:90px;right:12px;z-index:61;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent';
-  gyroBtn.onclick=function(){
-    if(!hasGyro){enableGyro();return;}
-    useGyro=!useGyro;updateGyroUI();
-  };
-  document.body.appendChild(gyroBtn);
+// Show/hide joystick based on control mode
+function updateControlsUI(){
+  if(!isTouch)return;
+  joystickArea.style.display=(controlMode==='joystick'&&playing)?'block':'none';
 }
 
-// Boost
+// ── Boost button ���─
 var bTouchId=null;
 boostBtn.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();bTouchId=e.changedTouches[0].identifier;boosting=true;boostBtn.classList.add('active');},{passive:false});
 boostBtn.addEventListener('touchend',function(e){for(var i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].identifier===bTouchId){boosting=false;boostBtn.classList.remove('active');bTouchId=null;break;}}});
@@ -298,10 +319,14 @@ boostBtn.addEventListener('touchcancel',function(){boosting=false;boostBtn.class
 setInterval(function(){
   if(!playing)return;
   var a;
-  if(isTouch){
-    a=useGyro?gyroAngle:joyAngle;
-  } else {
+  if(!isTouch){
     a=Math.atan2(mouseY-H/2,mouseX-W/2);
+  } else if(controlMode==='gyro'){
+    a=gyroAngle;
+  } else if(controlMode==='touch'){
+    a=touchAngle;
+  } else {
+    a=joyAngle;
   }
   socket.emit('input',{angle:a,boost:boosting});
 },33);
