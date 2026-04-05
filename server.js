@@ -113,7 +113,7 @@ setInterval(() => {
     const speed = p.boosting ? BOOST_SPEED : SPEED;
 
     // Lose segments when boosting
-    if (p.boosting && p.segments.length > 5 && Math.random() < 0.06) {
+    if (p.boosting && p.segments.length > 5 && Math.random() < 0.15) {
       const tail = p.segments.pop();
       food.push({
         x: tail.x,
