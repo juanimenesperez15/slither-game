@@ -158,9 +158,10 @@ buildColorEditor();drawPreview();
 // ── Socket ──
 var socket=io({transports:['websocket']});
 var myId=null,mouseX=W/2,mouseY=H/2,boosting=false,playing=false,lastScore=0;
-// Double buffer for interpolation
-var stateA=null,stateB=null,stateATime=0,stateBTime=0;
+var serverState=null;
 var leaderboard=[];
+// Smooth display positions per player {id: [{x,y},...]}
+var displayBuf={};
 
 var PW_NAMES={speed:'Velocidad!',shield:'Escudo!',magnet:'Iman!',x2:'Puntos x2!',shrink:'Encogiste a todos!',ghost:'Fantasma!'};
 var PW_COLORS={speed:'#FBBF24',shield:'#3B82F6',magnet:'#A78BFA',x2:'#22C55E',shrink:'#EF4444',ghost:'#94A3B8'};
@@ -196,13 +197,13 @@ function hideGameUI(){
 }
 
 function startGame(){
-  stateA=stateB=null;
+  serverState=null;displayBuf={};
   socket.emit('join',{name:nameInput.value.trim()||'Gusano',skin:myColors.join(',')});
   showGameUI();
 }
 document.getElementById('playBtn').onclick=startGame;
 document.getElementById('playBtn2').onclick=function(){
-  stateA=stateB=null;
+  serverState=null;displayBuf={};
   socket.emit('respawn',{name:nameInput.value.trim()||'Gusano',skin:myColors.join(',')});
   showGameUI();
 };
@@ -256,43 +257,41 @@ socket.on('s',function(s){
     var sp=s.p[id];
     up.players[id]={name:sp.n,skin:sp.sk||'classic',segments:sp.s,boosting:!!sp.b,effects:sp.fx||[]};
   }
-  // Shift buffers
-  stateA=stateB;stateATime=stateBTime;
-  stateB=up;stateBTime=Date.now();
+  serverState=up;
   leaderboard=(s.lb||[]).map(function(e){return{name:e.n,score:e.s};});
   lastScore=s.sc;
 });
 
 socket.on('dead',function(d){
-  playing=false;stateA=stateB=null;
+  playing=false;serverState=null;displayBuf={};
   document.getElementById('deathMsg').textContent=d.killer?('Te elimino: '+d.killer):'Tocaste el borde!';
   document.getElementById('deathScore').textContent=d.score||lastScore;
   if(d.ranking){renderRanking(document.getElementById('deathRanking'),d.ranking);renderRanking(document.getElementById('menuRanking'),d.ranking);}
   deathScreen.classList.add('show');hideGameUI();
 });
 
-// ── Interpolation between stateA and stateB ──
-function lerpSegs(a,b,t){
-  if(!a)return b;
-  var len=Math.min(a.length,b.length),out=[];
-  for(var i=0;i<len;i++) out.push({x:a[i].x+(b[i].x-a[i].x)*t,y:a[i].y+(b[i].y-a[i].y)*t});
-  for(var j=len;j<b.length;j++) out.push({x:b[j].x,y:b[j].y});
-  return out;
-}
+// ── Smooth display: exponential smoothing per frame ──
+var SMOOTH=0.18; // blend factor per frame at 60fps
 
-function getInterpolatedPlayer(id){
-  if(!stateA||!stateB)return stateB?stateB.players[id]:null;
-  var a=stateA.players[id],b=stateB.players[id];
-  if(!b)return null;
-  if(!a)return b;
-  var interval=stateBTime-stateATime;
-  if(interval<=0)interval=33;
-  // t goes from 0 (at stateA) to 1 (at stateB), clamped - no extrapolation
-  var t=Math.min((Date.now()-stateATime)/interval,1);
-  return{
-    name:b.name,skin:b.skin,boosting:b.boosting,effects:b.effects,
-    segments:lerpSegs(a.segments,b.segments,t)
-  };
+function getSmoothedSegs(id,targetSegs){
+  if(!targetSegs||!targetSegs.length)return targetSegs;
+  var buf=displayBuf[id];
+  if(!buf){
+    // First time: snap to position
+    buf=[];
+    for(var i=0;i<targetSegs.length;i++) buf.push({x:targetSegs[i].x,y:targetSegs[i].y});
+    displayBuf[id]=buf;
+    return buf;
+  }
+  // Adjust length
+  while(buf.length<targetSegs.length){var l=buf[buf.length-1];buf.push({x:l.x,y:l.y});}
+  while(buf.length>targetSegs.length)buf.pop();
+  // Smooth each segment toward target
+  for(var j=0;j<targetSegs.length;j++){
+    buf[j].x+=(targetSegs[j].x-buf[j].x)*SMOOTH;
+    buf[j].y+=(targetSegs[j].y-buf[j].y)*SMOOTH;
+  }
+  return buf;
 }
 
 function parseSkinColors(sk){
@@ -392,24 +391,25 @@ var lbFrame=0;
 function render(){
   requestAnimationFrame(render);
   ctx.fillStyle='#080816';ctx.fillRect(0,0,W,H);
-  if(!stateB||!playing)return;
+  if(!serverState||!playing)return;
 
-  // Get interpolated local player
-  var me=getInterpolatedPlayer(myId);
+  var me=serverState.players[myId];
   if(!me||!me.segments||!me.segments.length)return;
 
-  var cx=me.segments[0].x,cy=me.segments[0].y;
+  // Smooth all players every frame
+  var mySegs=getSmoothedSegs(myId,me.segments);
+  var cx=mySegs[0].x,cy=mySegs[0].y;
 
   drawGrid(cx,cy);drawBorder(cx,cy);
-  drawFood(stateB.food,cx,cy);drawPowerups(stateB.powerups||[],cx,cy);
+  drawFood(serverState.food,cx,cy);drawPowerups(serverState.powerups||[],cx,cy);
 
-  // Draw all players interpolated
-  for(var id in stateB.players){
+  for(var id in serverState.players){
     if(id===myId)continue;
-    var p=getInterpolatedPlayer(id);
-    if(p)drawSnake(p.segments,p.skin,p.name,p.boosting,p.effects,cx,cy);
+    var p=serverState.players[id];
+    var segs=getSmoothedSegs(id,p.segments);
+    drawSnake(segs,p.skin,p.name,p.boosting,p.effects,cx,cy);
   }
-  drawSnake(me.segments,me.skin,me.name,me.boosting,me.effects,cx,cy);
+  drawSnake(mySegs,me.skin,me.name,me.boosting,me.effects,cx,cy);
 
   if(!isTouch){ctx.beginPath();ctx.arc(mouseX,mouseY,3.5,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1.5;ctx.stroke();}
 
@@ -422,7 +422,7 @@ function render(){
     lbh+='<div class="lb-entry'+(u?' you':'')+'"><span class="lb-name">'+(li+1)+'. '+e.name+'</span><span>'+e.score+'</span></div>';}
     document.getElementById('lbList').innerHTML=lbh;}
 
-  drawMinimap(stateB);
+  drawMinimap(serverState);
 }
 render();
 })();
