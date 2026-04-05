@@ -386,10 +386,14 @@ setInterval(function() {
   for (var id in players) {
     var p = players[id];
 
-    // Determine camera target (own head or first alive for spectators)
+    // Determine camera target (own head or first alive for spectators, or map center)
     var camPlayer = p.alive ? p : alivePlayers[0];
-    if (!camPlayer) continue;
-    var camHead = camPlayer.segments[0];
+    var camHead;
+    if (camPlayer && camPlayer.segments && camPlayer.segments.length) {
+      camHead = camPlayer.segments[0];
+    } else {
+      camHead = { x: mapCenter, y: mapCenter }; // fallback: center of map
+    }
     var viewDist = 900;
 
     var np = {};

@@ -588,13 +588,18 @@ function render(){
   var me=serverState.players[myId];
   if(me&&me.segments&&me.segments.length){camTarget=me;}
   else{
-    // Spectator: follow first alive player
     for(var sid in serverState.players){var sp=serverState.players[sid];if(sp.segments&&sp.segments.length){camTarget=sp;break;}}
   }
-  if(!camTarget)return;
 
-  var camSegs=getSmoothedSegs(camTarget===me?myId:'_cam',camTarget.segments);
-  var cx=camSegs[0].x,cy=camSegs[0].y;
+  var cx,cy;
+  if(camTarget){
+    var camSegs=getSmoothedSegs(camTarget===me?myId:'_cam',camTarget.segments);
+    cx=camSegs[0].x;cy=camSegs[0].y;
+  } else {
+    // No players alive - center on map
+    var mb=mapBounds;
+    cx=(mb.x1+mb.x2)/2;cy=(mb.y1+mb.y2)/2;
+  }
 
   drawGrid(cx,cy);drawBorder(cx,cy);
   drawFood(serverState.food,cx,cy);drawPowerups(serverState.powerups||[],cx,cy);
