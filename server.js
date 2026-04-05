@@ -131,11 +131,13 @@ setInterval(() => {
       y: head.y + Math.sin(p.angle) * speed,
     };
 
-    // World boundaries - wrap around
-    if (newHead.x < 0) newHead.x += WORLD_W;
-    if (newHead.x > WORLD_W) newHead.x -= WORLD_W;
-    if (newHead.y < 0) newHead.y += WORLD_H;
-    if (newHead.y > WORLD_H) newHead.y -= WORLD_H;
+    // World boundaries - die on border hit
+    if (newHead.x < 0 || newHead.x > WORLD_W || newHead.y < 0 || newHead.y > WORLD_H) {
+      p.alive = false;
+      dropFood(p.segments);
+      io.to(id).emit('dead', { killer: null });
+      continue;
+    }
 
     p.segments.unshift(newHead);
 

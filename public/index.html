@@ -4,12 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
   <title>El Gusanito de Romano</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: #0a0a1a;
+      background: #080816;
       overflow: hidden;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
       color: white;
       touch-action: none;
       -webkit-touch-callout: none;
@@ -18,6 +20,7 @@
     }
     canvas#game { display: block; }
 
+    /* ── Menu ── */
     #menu {
       position: fixed;
       inset: 0;
@@ -25,45 +28,61 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      background: rgba(10, 10, 26, 0.92);
-      backdrop-filter: blur(10px);
+      background: radial-gradient(ellipse at center, rgba(20, 20, 50, 0.95), rgba(8, 8, 22, 0.98));
+      backdrop-filter: blur(12px);
     }
     #menu.hidden { display: none; }
 
     .menu-box {
       text-align: center;
-      padding: 40px 40px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      max-width: 90vw;
+      padding: 44px 48px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      max-width: 92vw;
     }
     .menu-box h1 {
-      font-size: clamp(28px, 7vw, 52px);
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #4ECDC4, #45B7D1, #FF6B6B);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(30px, 7vw, 48px);
+      font-weight: 800;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #6EE7B7, #3B82F6, #A78BFA);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
     }
-    .menu-box p { color: #888; margin-bottom: 24px; font-size: 15px; }
+    .menu-box .subtitle {
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 28px;
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
 
     #nameInput {
       display: block;
       width: 260px;
       max-width: 80vw;
-      margin: 0 auto 18px;
-      padding: 14px 20px;
-      font-size: 18px;
-      border: 2px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.08);
+      margin: 0 auto 16px;
+      padding: 13px 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
       color: white;
       text-align: center;
       outline: none;
-      transition: border-color 0.3s;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
-    #nameInput:focus { border-color: #4ECDC4; }
-    #nameInput::placeholder { color: #555; }
+    #nameInput:focus {
+      border-color: rgba(110, 231, 183, 0.5);
+      box-shadow: 0 0 20px rgba(110, 231, 183, 0.1);
+    }
+    #nameInput::placeholder { color: rgba(255,255,255,0.2); }
 
     .play-btn {
       display: block;
@@ -71,28 +90,33 @@
       max-width: 80vw;
       margin: 0 auto;
       padding: 14px;
-      font-size: 20px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
       font-weight: 700;
+      letter-spacing: 1px;
       border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #4ECDC4, #45B7D1);
-      color: #0a0a1a;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6EE7B7, #3B82F6);
+      color: #080816;
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
     .play-btn:hover {
-      transform: scale(1.04);
-      box-shadow: 0 6px 30px rgba(78, 205, 196, 0.4);
+      transform: scale(1.03);
+      box-shadow: 0 8px 30px rgba(110, 231, 183, 0.3);
     }
+    .play-btn:active { transform: scale(0.98); }
 
     .controls-hint {
-      margin-top: 20px;
-      color: #555;
-      font-size: 13px;
-      line-height: 1.8;
+      margin-top: 22px;
+      color: rgba(255,255,255,0.25);
+      font-size: 12px;
+      line-height: 1.9;
+      letter-spacing: 0.5px;
     }
 
+    /* ── Death screen ── */
     #deathScreen {
       position: fixed;
       inset: 0;
@@ -100,161 +124,159 @@
       align-items: center;
       justify-content: center;
       z-index: 90;
-      background: rgba(10, 10, 26, 0.85);
-      backdrop-filter: blur(6px);
+      background: rgba(8, 8, 22, 0.88);
+      backdrop-filter: blur(8px);
     }
     #deathScreen.show { display: flex; }
     .death-box {
       text-align: center;
-      padding: 35px 40px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255, 107, 107, 0.3);
-      max-width: 90vw;
+      padding: 36px 44px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      max-width: 92vw;
     }
-    .death-box h2 { font-size: 32px; color: #FF6B6B; margin-bottom: 10px; }
-    .death-box p { color: #aaa; margin-bottom: 16px; }
-    #deathScore { font-size: 48px; font-weight: 700; color: #4ECDC4; }
+    .death-box h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      color: #EF4444;
+      margin-bottom: 8px;
+    }
+    .death-box p { color: rgba(255,255,255,0.45); margin-bottom: 14px; font-size: 14px; }
+    #deathScore {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6EE7B7, #3B82F6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
+    /* ── HUD ── */
     #hud {
       position: fixed;
-      top: 12px;
-      left: 12px;
+      top: 14px;
+      left: 14px;
       z-index: 50;
       pointer-events: none;
     }
     #score {
-      font-size: 18px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
       font-weight: 700;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
     }
 
+    /* ── Leaderboard ── */
     #leaderboard {
       position: fixed;
-      top: 12px;
-      right: 12px;
+      top: 14px;
+      right: 14px;
       z-index: 50;
       pointer-events: none;
-      background: rgba(0,0,0,0.4);
-      border-radius: 12px;
-      padding: 10px 14px;
-      min-width: 150px;
-      backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.35);
+      border-radius: 14px;
+      padding: 12px 16px;
+      min-width: 155px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.05);
     }
     #leaderboard h3 {
-      font-size: 11px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #666;
-      margin-bottom: 6px;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 8px;
+      font-weight: 600;
     }
     .lb-entry {
       display: flex;
       justify-content: space-between;
       font-size: 12px;
       padding: 2px 0;
-      color: #ccc;
+      color: rgba(255,255,255,0.55);
+      font-weight: 400;
     }
-    .lb-entry.you { color: #4ECDC4; font-weight: 700; }
+    .lb-entry.you { color: #6EE7B7; font-weight: 700; }
     .lb-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+    /* ── Minimap ── */
     #minimap {
       position: fixed;
-      bottom: 15px;
-      right: 15px;
+      bottom: 14px;
+      left: 14px;
       z-index: 50;
       pointer-events: none;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(0,0,0,0.4);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.35);
     }
 
+    /* ── Boost bar ── */
     #boostBar {
       position: fixed;
-      bottom: 15px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 50;
       pointer-events: none;
-      width: 160px;
-      height: 6px;
-      background: rgba(255,255,255,0.1);
+      width: 150px;
+      height: 5px;
+      background: rgba(255,255,255,0.08);
       border-radius: 3px;
       overflow: hidden;
     }
     #boostFill {
       height: 100%;
-      background: linear-gradient(90deg, #FF6B6B, #FFEAA7);
+      background: linear-gradient(90deg, #F59E0B, #EF4444);
       border-radius: 3px;
       transition: width 0.2s;
       width: 100%;
     }
 
-    /* Mobile joystick */
-    #joystickArea {
-      display: none;
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      z-index: 60;
-      width: 150px;
-      height: 150px;
-    }
-    #joystickBase {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.06);
-      border: 2px solid rgba(255,255,255,0.12);
-    }
-    #joystickThumb {
-      position: absolute;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(78, 205, 196, 0.35);
-      border: 2px solid rgba(78, 205, 196, 0.5);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      transition: background 0.15s;
-    }
-
+    /* ── Mobile boost button ── */
     #boostBtn {
       display: none;
       position: fixed;
-      bottom: 40px;
-      right: 30px;
+      bottom: 30px;
+      left: 14px;
       z-index: 60;
-      width: 80px;
-      height: 80px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
-      background: rgba(255, 107, 107, 0.2);
-      border: 3px solid rgba(255, 107, 107, 0.45);
-      color: rgba(255,255,255,0.7);
-      font-size: 13px;
-      font-weight: 700;
+      background: rgba(245, 158, 11, 0.15);
+      border: 2px solid rgba(245, 158, 11, 0.35);
+      color: rgba(255,255,255,0.8);
+      font-size: 28px;
+      line-height: 1;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.15s;
+      align-items: center;
+      justify-content: center;
     }
     #boostBtn.active {
-      background: rgba(255, 107, 107, 0.5);
-      border-color: rgba(255, 107, 107, 0.8);
+      background: rgba(245, 158, 11, 0.45);
+      border-color: rgba(245, 158, 11, 0.7);
+      transform: scale(1.08);
     }
 
-    /* Mobile adjustments */
+    /* ── Mobile adjustments ── */
     @media (max-width: 700px) {
-      #leaderboard { padding: 8px 10px; min-width: 120px; }
-      #leaderboard h3 { font-size: 10px; }
+      .menu-box { padding: 32px 28px; }
+      #leaderboard { padding: 8px 11px; min-width: 120px; }
+      #leaderboard h3 { font-size: 9px; }
       .lb-entry { font-size: 11px; }
-      .lb-name { max-width: 70px; }
-      #minimap { width: 100px !important; height: 100px !important; bottom: 10px; right: 10px; }
-      #boostBar { bottom: 8px; width: 120px; }
+      .lb-name { max-width: 68px; }
+      #minimap { width: 90px !important; height: 90px !important; }
+      #boostBar { width: 100px; }
       #score { font-size: 16px; }
     }
 
-    /* Hide mobile controls on desktop */
     @media (hover: hover) and (pointer: fine) {
       #game { cursor: none; }
     }
@@ -264,23 +286,22 @@
 
 <div id="menu">
   <div class="menu-box">
-    <h1>🐍 El Gusanito de Romano</h1>
-    <p>Juego de gusanos multijugador</p>
+    <h1>El Gusanito de Romano</h1>
+    <div class="subtitle">multijugador online</div>
     <input type="text" id="nameInput" placeholder="Tu nombre..." maxlength="15" autofocus value="Romano">
     <button class="play-btn" id="playBtn">JUGAR</button>
     <div class="controls-hint" id="controlsHint">
-      Mouse = dirección<br>
-      Click / Espacio = turbo<br>
+      Mouse = dirección &nbsp;&middot;&nbsp; Click / Espacio = turbo
     </div>
   </div>
 </div>
 
 <div id="deathScreen">
   <div class="death-box">
-    <h2>💀 Moriste</h2>
+    <h2>Moriste</h2>
     <p id="deathMsg"></p>
     <div id="deathScore">0</div>
-    <p style="margin-top: 5px; font-size: 13px; color: #666;">de largo</p>
+    <p style="margin-top: 4px; font-size: 12px; color: rgba(255,255,255,0.25);">de largo</p>
     <br>
     <button class="play-btn" id="playBtn2">REINTENTAR</button>
   </div>
@@ -295,18 +316,13 @@
   <div id="lbList"></div>
 </div>
 
-<canvas id="minimap" class="hidden" width="140" height="140"></canvas>
+<canvas id="minimap" class="hidden" width="130" height="130"></canvas>
 
 <div id="boostBar" class="hidden">
   <div id="boostFill"></div>
 </div>
 
-<!-- Mobile controls -->
-<div id="joystickArea">
-  <div id="joystickBase"></div>
-  <div id="joystickThumb"></div>
-</div>
-<button id="boostBtn">TURBO</button>
+<button id="boostBtn">&#x1F680;</button>
 
 <canvas id="game"></canvas>
 
@@ -326,7 +342,6 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Detect touch device
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
   const socket = io();
@@ -337,18 +352,16 @@
   let boosting = false;
   let playing = false;
   let lastScore = 0;
-  let touchAngle = 0;
-  let joystickActive = false;
+  let touchAngle = null;
 
-  // Menu
   const menu = document.getElementById('menu');
   const deathScreen = document.getElementById('deathScreen');
   const nameInput = document.getElementById('nameInput');
+  const boostBtn = document.getElementById('boostBtn');
 
-  // Update controls hint for mobile
   if (isTouchDevice) {
     document.getElementById('controlsHint').innerHTML =
-      'Joystick izquierdo = dirección<br>Botón derecho = turbo';
+      'Tocá la pantalla = dirección &nbsp;&middot;&nbsp; Botón &#x1F680; = turbo';
   }
 
   function showGameUI() {
@@ -359,10 +372,7 @@
     document.getElementById('minimap').classList.remove('hidden');
     document.getElementById('boostBar').classList.remove('hidden');
     if (isTouchDevice) {
-      document.getElementById('joystickArea').style.display = 'block';
-      document.getElementById('boostBtn').style.display = 'flex';
-      document.getElementById('boostBtn').style.alignItems = 'center';
-      document.getElementById('boostBtn').style.justifyContent = 'center';
+      boostBtn.style.display = 'flex';
     }
     playing = true;
   }
@@ -370,8 +380,7 @@
   function hideGameUI() {
     document.getElementById('hud').classList.add('hidden');
     if (isTouchDevice) {
-      document.getElementById('joystickArea').style.display = 'none';
-      document.getElementById('boostBtn').style.display = 'none';
+      boostBtn.style.display = 'none';
     }
   }
 
@@ -411,80 +420,48 @@
     if (e.code === 'Space') boosting = false;
   });
 
-  // === MOBILE JOYSTICK ===
-  const joystickArea = document.getElementById('joystickArea');
-  const joystickThumb = document.getElementById('joystickThumb');
-  const boostBtn = document.getElementById('boostBtn');
-  let joystickTouchId = null;
+  // === MOBILE: touch anywhere on screen = direction ===
+  let moveTouchId = null;
+
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (!playing) return;
+    const touch = e.changedTouches[0];
+    moveTouchId = touch.identifier;
+    mouseX = touch.clientX;
+    mouseY = touch.clientY;
+    touchAngle = Math.atan2(mouseY - H / 2, mouseX - W / 2);
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!playing) return;
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === moveTouchId) {
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+        touchAngle = Math.atan2(mouseY - H / 2, mouseX - W / 2);
+        break;
+      }
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', (e) => {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === moveTouchId) {
+        moveTouchId = null;
+        // Keep last angle, don't reset
+        break;
+      }
+    }
+  });
+
+  // === MOBILE: boost button ===
   let boostTouchId = null;
 
-  const JOYSTICK_RADIUS = 75; // half of 150px area
-  const THUMB_MAX = 50; // max offset from center
-
-  function handleJoystickMove(clientX, clientY) {
-    const rect = joystickArea.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    let dx = clientX - centerX;
-    let dy = clientY - centerY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    // Clamp to max radius
-    if (dist > THUMB_MAX) {
-      dx = (dx / dist) * THUMB_MAX;
-      dy = (dy / dist) * THUMB_MAX;
-    }
-
-    joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-
-    // Only update angle if moved enough from center
-    if (dist > 10) {
-      touchAngle = Math.atan2(dy, dx);
-      joystickActive = true;
-    }
-  }
-
-  function resetJoystick() {
-    joystickThumb.style.transform = 'translate(-50%, -50%)';
-    joystickActive = false;
-    joystickTouchId = null;
-  }
-
-  // Touch events for joystick
-  joystickArea.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touch = e.changedTouches[0];
-    joystickTouchId = touch.identifier;
-    handleJoystickMove(touch.clientX, touch.clientY);
-  }, { passive: false });
-
-  joystickArea.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    for (const touch of e.changedTouches) {
-      if (touch.identifier === joystickTouchId) {
-        handleJoystickMove(touch.clientX, touch.clientY);
-        break;
-      }
-    }
-  }, { passive: false });
-
-  joystickArea.addEventListener('touchend', (e) => {
-    for (const touch of e.changedTouches) {
-      if (touch.identifier === joystickTouchId) {
-        resetJoystick();
-        break;
-      }
-    }
-  });
-
-  joystickArea.addEventListener('touchcancel', () => {
-    resetJoystick();
-  });
-
-  // Touch events for boost button
   boostBtn.addEventListener('touchstart', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     boostTouchId = e.changedTouches[0].identifier;
     boosting = true;
     boostBtn.classList.add('active');
@@ -507,23 +484,12 @@
     boostTouchId = null;
   });
 
-  // Prevent default touch on canvas (no scrolling/zooming during gameplay)
-  canvas.addEventListener('touchstart', (e) => { if (playing) e.preventDefault(); }, { passive: false });
-  canvas.addEventListener('touchmove', (e) => { if (playing) e.preventDefault(); }, { passive: false });
-
-  // Also support touch directly on canvas for aiming (alternative: tap-to-aim)
-  // This handles the case where user touches the game area itself on mobile
-  let canvasTouchId = null;
-  canvas.addEventListener('touchstart', (e) => {
-    if (!playing || isTouchDevice) return; // joystick handles it on touch devices
-  });
-
   // Send input
   setInterval(() => {
     if (!playing || !state) return;
     let angle;
     if (isTouchDevice) {
-      angle = joystickActive ? touchAngle : null;
+      angle = touchAngle;
     } else {
       angle = Math.atan2(mouseY - H / 2, mouseX - W / 2);
     }
@@ -541,16 +507,17 @@
   socket.on('dead', (data) => {
     playing = false;
     document.getElementById('deathMsg').textContent =
-      data.killer ? `Te eliminó: ${data.killer}` : 'Chocaste!';
+      data.killer ? `Te eliminó: ${data.killer}` : 'Tocaste el borde!';
     document.getElementById('deathScore').textContent = lastScore;
     deathScreen.classList.add('show');
     hideGameUI();
   });
 
-  // Grid pattern
+  // ── Rendering ──
+
   function drawGrid(camX, camY) {
-    const gridSize = 60;
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    const gridSize = 65;
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
     ctx.lineWidth = 1;
 
     const startX = -((camX - W / 2) % gridSize);
@@ -570,21 +537,21 @@
     }
   }
 
-  // Draw a snake
   function drawSnake(p, camX, camY, isMe) {
     const segs = p.segments;
     if (segs.length < 2) return;
 
     ctx.shadowColor = p.color;
-    ctx.shadowBlur = isMe ? 18 : 12;
+    ctx.shadowBlur = isMe ? 20 : 10;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
     for (let i = segs.length - 1; i >= 1; i--) {
       const s = segs[i];
       const prev = segs[i - 1];
-      const alpha = 0.5 + 0.5 * (1 - i / segs.length);
-      const thickness = 10 + (1 - i / segs.length) * 8;
+      const t = 1 - i / segs.length;
+      const alpha = 0.4 + 0.6 * t;
+      const thickness = 8 + t * 10;
 
       ctx.beginPath();
       ctx.moveTo(s.x - camX + W / 2, s.y - camY + H / 2);
@@ -606,30 +573,28 @@
     const hy = head.y - camY + H / 2;
 
     ctx.beginPath();
-    ctx.arc(hx, hy, 11, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 12, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
     ctx.fill();
 
     // Eyes
-    const eyeDist = 5;
-    const eyeAngle = Math.PI / 2;
     for (const side of [-1, 1]) {
-      const ex = hx + Math.cos(angle + eyeAngle * side) * eyeDist;
-      const ey = hy + Math.sin(angle + eyeAngle * side) * eyeDist;
+      const ex = hx + Math.cos(angle + (Math.PI / 2) * side) * 5;
+      const ey = hy + Math.sin(angle + (Math.PI / 2) * side) * 5;
       ctx.beginPath();
       ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = '#fff';
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(ex + Math.cos(angle) * 1.2, ey + Math.sin(angle) * 1.2, 2, 0, Math.PI * 2);
+      ctx.arc(ex + Math.cos(angle) * 1.3, ey + Math.sin(angle) * 1.3, 1.8, 0, Math.PI * 2);
       ctx.fillStyle = '#111';
       ctx.fill();
     }
 
     // Name
-    ctx.font = 'bold 13px Segoe UI';
+    ctx.font = "600 12px 'Outfit', sans-serif";
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.fillText(p.name, hx, hy - 22);
 
     // Boost particles
@@ -637,23 +602,22 @@
       const tail = segs[segs.length - 1];
       const tx = tail.x - camX + W / 2;
       const ty = tail.y - camY + H / 2;
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 4; i++) {
         ctx.beginPath();
         ctx.arc(
-          tx + (Math.random() - 0.5) * 20,
-          ty + (Math.random() - 0.5) * 20,
-          2 + Math.random() * 3,
+          tx + (Math.random() - 0.5) * 24,
+          ty + (Math.random() - 0.5) * 24,
+          1.5 + Math.random() * 3,
           0, Math.PI * 2
         );
         ctx.fillStyle = p.color;
-        ctx.globalAlpha = 0.3 + Math.random() * 0.3;
+        ctx.globalAlpha = 0.2 + Math.random() * 0.4;
         ctx.fill();
       }
       ctx.globalAlpha = 1;
     }
   }
 
-  // Draw food
   function drawFood(foodList, camX, camY) {
     for (const f of foodList) {
       const fx = f.x - camX + W / 2;
@@ -661,39 +625,50 @@
       if (fx < -20 || fx > W + 20 || fy < -20 || fy > H + 20) continue;
 
       ctx.shadowColor = f.color;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 10;
       ctx.beginPath();
       ctx.arc(fx, fy, f.r, 0, Math.PI * 2);
       ctx.fillStyle = f.color;
-      ctx.globalAlpha = 0.8;
+      ctx.globalAlpha = 0.75;
       ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
   }
 
-  // Draw world border
   function drawBorder(camX, camY, world) {
-    ctx.strokeStyle = 'rgba(255, 107, 107, 0.4)';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([15, 10]);
-    ctx.strokeRect(
-      -camX + W / 2,
-      -camY + H / 2,
-      world.w,
-      world.h
-    );
+    // Danger zone glow near borders
+    const bx = -camX + W / 2;
+    const by = -camY + H / 2;
+
+    // Red border
+    ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+    ctx.lineWidth = 3;
     ctx.setLineDash([]);
+    ctx.strokeRect(bx, by, world.w, world.h);
+
+    // Outer dark area
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.04)';
+    // top
+    ctx.fillRect(bx - 2000, by - 2000, world.w + 4000, 2000);
+    // bottom
+    ctx.fillRect(bx - 2000, by + world.h, world.w + 4000, 2000);
+    // left
+    ctx.fillRect(bx - 2000, by, 2000, world.h);
+    // right
+    ctx.fillRect(bx + world.w, by, 2000, world.h);
   }
 
-  // Draw minimap
   function drawMinimap(world) {
     if (!state) return;
     const mw = minimapCanvas.width;
     const mh = minimapCanvas.height;
     minimapCtx.clearRect(0, 0, mw, mh);
-    minimapCtx.fillStyle = 'rgba(0,0,0,0.3)';
-    minimapCtx.fillRect(0, 0, mw, mh);
+
+    // Border
+    minimapCtx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+    minimapCtx.lineWidth = 1;
+    minimapCtx.strokeRect(1, 1, mw - 2, mh - 2);
 
     for (const id in state.players) {
       const p = state.players[id];
@@ -702,7 +677,7 @@
       const my = (head.y / world.h) * mh;
       minimapCtx.beginPath();
       minimapCtx.arc(mx, my, id === myId ? 4 : 2.5, 0, Math.PI * 2);
-      minimapCtx.fillStyle = id === myId ? '#4ECDC4' : p.color;
+      minimapCtx.fillStyle = id === myId ? '#6EE7B7' : p.color;
       minimapCtx.fill();
     }
   }
@@ -711,7 +686,7 @@
   function render() {
     requestAnimationFrame(render);
 
-    ctx.fillStyle = '#0a0a1a';
+    ctx.fillStyle = '#080816';
     ctx.fillRect(0, 0, W, H);
 
     if (!state || !playing) return;
@@ -736,8 +711,8 @@
     // Cursor (desktop only)
     if (!isTouchDevice) {
       ctx.beginPath();
-      ctx.arc(mouseX, mouseY, 5, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
@@ -746,7 +721,6 @@
     lastScore = state.score;
     document.getElementById('score').textContent = `Largo: ${state.score}`;
 
-    // Boost bar
     const boostPercent = Math.max(0, (state.score - 5) / (state.score || 1)) * 100;
     document.getElementById('boostFill').style.width =
       boosting ? Math.max(0, boostPercent - 20) + '%' : boostPercent + '%';
