@@ -62,14 +62,6 @@
     #boostBtn.active{background:rgba(245,158,11,.45);border-color:rgba(245,158,11,.7);transform:scale(1.08)}
     #pwToast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:80;pointer-events:none;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;opacity:0;transition:opacity .3s,transform .3s}
     #pwToast.show{opacity:1;transform:translate(-50%,-60%)}
-    #gameTimer{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,.8);text-shadow:0 2px 8px rgba(0,0,0,.6);text-align:center}
-    #gameTimer .phase-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.35);display:block}
-    #gameTimer .alive-count{font-size:11px;color:rgba(255,255,255,.4);display:block;margin-top:2px}
-    #specBanner{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.5);background:rgba(0,0,0,.4);padding:6px 16px;border-radius:10px;backdrop-filter:blur(4px)}
-    #phaseOverlay{display:none;position:fixed;inset:0;z-index:95;background:rgba(8,8,22,.9);backdrop-filter:blur(8px);align-items:center;justify-content:center;text-align:center;font-family:'Space Grotesk',sans-serif}
-    #phaseOverlay.show{display:flex}
-    #phaseOverlay h2{font-size:36px;font-weight:800;margin-bottom:8px}
-    #phaseOverlay p{color:rgba(255,255,255,.5);font-size:16px}
     @media(max-width:700px){.menu-box{padding:24px 20px}#leaderboard{padding:6px 10px;min-width:110px}.lb-entry{font-size:10px}.lb-name{max-width:60px}#minimap{width:80px!important;height:80px!important;bottom:8px!important}#boostBar{display:none!important}#score{font-size:15px}}
     @media(hover:hover) and (pointer:fine){#game{cursor:none}}
   </style>
@@ -114,9 +106,6 @@
 <div id="joystickArea"><div id="joystickBase"></div><div id="joystickThumb"></div></div>
 <button id="boostBtn">&#x1F680;</button>
 <div id="pwToast"></div>
-<div id="gameTimer" class="hidden"><span class="phase-label"></span><span class="time"></span><span class="alive-count"></span></div>
-<div id="specBanner">Modo Espectador</div>
-<div id="phaseOverlay"><div><h2 id="phaseTitle"></h2><p id="phaseMsg"></p></div></div>
 <canvas id="game"></canvas>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -136,23 +125,13 @@ var myColors=['#4ECDC4','#45B7D1','#6EE7B7'];
 var colorEditor=document.getElementById('colorEditor');
 var previewCvs=document.getElementById('snakePreview');
 
-function isTooDark(hex){
-  if(!hex||hex.length<7)return false;
-  var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);
-  if(0.299*r+0.587*g+0.114*b<25)return true;
-  if(b>100&&r<40&&g<40)return true;
-  return false;
-}
 function buildColorEditor(){
   colorEditor.innerHTML='';
   for(var i=0;i<myColors.length;i++){
     (function(idx){
       var inp=document.createElement('input');
       inp.type='color'; inp.value=myColors[idx]; inp.className='color-pick';
-      inp.oninput=function(){
-        if(isTooDark(inp.value)){inp.value=myColors[idx];return;}
-        myColors[idx]=inp.value;drawPreview();
-      };
+      inp.oninput=function(){myColors[idx]=inp.value;drawPreview();};
       colorEditor.appendChild(inp);
     })(i);
   }
@@ -228,8 +207,7 @@ function hideGameUI(){
 }
 
 function startGame(){
-  serverState=null;displayBuf={};isSpectating=false;
-  document.getElementById('specBanner').style.display='none';
+  serverState=null;displayBuf={};
   socket.emit('join',{name:nameInput.value.trim()||'Gusano',skin:myColors.join(',')});
   showGameUI();
 }
@@ -353,61 +331,9 @@ setInterval(function(){
   socket.emit('input',{angle:a,boost:boosting});
 },33);
 
-// ── BR state ──
-var gamePhase='lobby';
-var mapBounds={x1:0,y1:0,x2:2000,y2:2000};
-var isSpectating=false;
-var aliveCount=0;
-var timeLeft=0;
-
-// ── Network ──
+// ── Network - double buffer for smooth interpolation ──
 socket.on('ranking',function(d){renderRanking(document.getElementById('menuRanking'),d);});
 socket.on('powerup',function(d){showToast(d.type);});
-
-socket.on('phase',function(d){
-  gamePhase=d.phase;
-  var overlay=document.getElementById('phaseOverlay');
-  var title=document.getElementById('phaseTitle');
-  var msg=document.getElementById('phaseMsg');
-  if(d.phase==='lobby'){
-    // Show menu again so player can change name/skin/controls
-    overlay.classList.remove('show');
-    playing=false;isSpectating=false;serverState=null;displayBuf={};
-    menu.classList.remove('hidden');
-    deathScreen.classList.remove('show');
-    document.getElementById('specBanner').style.display='none';
-    hideGameUI();
-  } else if(d.phase==='playing'){
-    // Flash "battle starts" then hide — auto show game UI
-    overlay.classList.add('show');
-    title.textContent='BATALLA COMIENZA';title.style.color='#6EE7B7';
-    msg.textContent='Sobrevive!';
-    document.getElementById('specBanner').style.display='none';
-    isSpectating=false;displayBuf={};
-    showGameUI();
-    setTimeout(function(){overlay.classList.remove('show');},2000);
-  } else if(d.phase==='ended'){
-    overlay.classList.add('show');
-    if(d.winner){title.textContent='GANADOR: '+d.winner.name;title.style.color='#F59E0B';msg.textContent='Largo: '+d.winner.score;}
-    else{title.textContent='PARTIDA TERMINADA';title.style.color='#EF4444';msg.textContent='';}
-    playing=false;
-    document.getElementById('specBanner').style.display='none';
-  }
-});
-
-socket.on('spectate',function(d){
-  isSpectating=true;playing=true;
-  document.getElementById('specBanner').style.display='block';
-  document.getElementById('specBanner').textContent=d.msg||'Modo Espectador';
-  menu.classList.add('hidden');deathScreen.classList.remove('show');
-  document.getElementById('hud').classList.remove('hidden');
-  document.getElementById('leaderboard').classList.remove('hidden');
-  document.getElementById('minimap').classList.remove('hidden');
-});
-
-socket.on('shrink',function(d){
-  showToast('Mapa se achica!');
-});
 
 socket.on('s',function(s){
   myId=s.i;
@@ -419,21 +345,14 @@ socket.on('s',function(s){
   serverState=up;
   leaderboard=(s.lb||[]).map(function(e){return{name:e.n,score:e.s};});
   lastScore=s.sc;
-  gamePhase=s.ph||'lobby';
-  timeLeft=s.tl||0;
-  aliveCount=s.ac||0;
-  isSpectating=!!s.spec;
-  if(s.bx1!==undefined){mapBounds={x1:s.bx1,y1:s.by1,x2:s.bx2,y2:s.by2};}
 });
 
 socket.on('dead',function(d){
-  // In BR: don't show menu, become spectator
-  isSpectating=true;
-  document.getElementById('specBanner').style.display='block';
-  document.getElementById('specBanner').textContent='Moriste'+(d.killer?' - Te elimino: '+d.killer:' - Tocaste el borde!')+' | Largo: '+(d.score||lastScore);
+  playing=false;serverState=null;displayBuf={};
+  document.getElementById('deathMsg').textContent=d.killer?('Te elimino: '+d.killer):'Tocaste el borde!';
+  document.getElementById('deathScore').textContent=d.score||lastScore;
   if(d.ranking){renderRanking(document.getElementById('deathRanking'),d.ranking);renderRanking(document.getElementById('menuRanking'),d.ranking);}
-  // Hide joystick/boost for spectators
-  if(isTouch){joystickArea.style.display='none';boostBtn.style.display='none';}
+  deathScreen.classList.add('show');hideGameUI();
 });
 
 // ── Smooth display: exponential smoothing per frame ──
@@ -531,26 +450,17 @@ function drawPowerups(pwl,cx,cy){
 }
 
 function drawBorder(cx,cy){
-  var mb=mapBounds;
-  var mw=mb.x2-mb.x1,mh=mb.y2-mb.y1;
-  var bx=mb.x1-cx+W/2,by=mb.y1-cy+H/2;
-  ctx.strokeStyle='rgba(239,68,68,.6)';ctx.lineWidth=3;ctx.strokeRect(bx,by,mw,mh);
-  ctx.fillStyle='rgba(239,68,68,.05)';
-  ctx.fillRect(bx-3000,by-3000,mw+6000,3000);ctx.fillRect(bx-3000,by+mh,mw+6000,3000);
-  ctx.fillRect(bx-3000,by,3000,mh);ctx.fillRect(bx+mw,by,3000,mh);
+  var bx=-cx+W/2,by=-cy+H/2;ctx.strokeStyle='rgba(239,68,68,.45)';ctx.lineWidth=3;ctx.strokeRect(bx,by,WORLD.w,WORLD.h);
+  ctx.fillStyle='rgba(239,68,68,.035)';ctx.fillRect(bx-2000,by-2000,WORLD.w+4000,2000);ctx.fillRect(bx-2000,by+WORLD.h,WORLD.w+4000,2000);
+  ctx.fillRect(bx-2000,by,2000,WORLD.h);ctx.fillRect(bx+WORLD.w,by,2000,WORLD.h);
 }
 
 function drawMinimap(st){
   if(!st)return;var mw=mmCvs.width,mh=mmCvs.height;mmCtx.clearRect(0,0,mw,mh);
-  var mb=mapBounds,mapW=mb.x2-mb.x1,mapH=mb.y2-mb.y1;
-  mmCtx.strokeStyle='rgba(239,68,68,.35)';mmCtx.lineWidth=1;mmCtx.strokeRect(1,1,mw-2,mh-2);
-  for(var id in st.players){var p=st.players[id],h=p.segments[0];
-    var mx=((h.x-mb.x1)/mapW)*mw,my=((h.y-mb.y1)/mapH)*mh;
-    mmCtx.beginPath();mmCtx.arc(mx,my,id===myId?3.5:2,0,Math.PI*2);
+  mmCtx.strokeStyle='rgba(239,68,68,.25)';mmCtx.lineWidth=1;mmCtx.strokeRect(1,1,mw-2,mh-2);
+  for(var id in st.players){var p=st.players[id],h=p.segments[0];mmCtx.beginPath();mmCtx.arc((h.x/WORLD.w)*mw,(h.y/WORLD.h)*mh,id===myId?3.5:2,0,Math.PI*2);
     mmCtx.fillStyle=id===myId?'#6EE7B7':parseSkinColors(p.skin)[0];mmCtx.fill();}
-  mmCtx.globalAlpha=0.6;var pws=st.powerups||[];for(var j=0;j<pws.length;j++){
-    var px=((pws[j].x-mb.x1)/mapW)*mw,py=((pws[j].y-mb.y1)/mapH)*mh;
-    mmCtx.beginPath();mmCtx.arc(px,py,2,0,Math.PI*2);mmCtx.fillStyle=pws[j].c;mmCtx.fill();}mmCtx.globalAlpha=1;
+  mmCtx.globalAlpha=0.6;var pws=st.powerups||[];for(var j=0;j<pws.length;j++){mmCtx.beginPath();mmCtx.arc((pws[j].x/WORLD.w)*mw,(pws[j].y/WORLD.h)*mh,2,0,Math.PI*2);mmCtx.fillStyle=pws[j].c;mmCtx.fill();}mmCtx.globalAlpha=1;
 }
 
 var FX_LABELS={speed:['Velocidad','#FBBF24'],shield:['Escudo','#3B82F6'],magnet:['Iman','#A78BFA'],x2:['x2','#22C55E'],ghost:['Fantasma','#94A3B8']};
@@ -563,59 +473,35 @@ function updateFx(effects){
 
 var lbFrame=0;
 
-function formatTime(s){var m=Math.floor(s/60);var sec=s%60;return m+':'+(sec<10?'0':'')+sec;}
-
 function render(){
   requestAnimationFrame(render);
   ctx.fillStyle='#080816';ctx.fillRect(0,0,W,H);
-
-  // Update timer
-  var timerEl=document.getElementById('gameTimer');
-  if(serverState&&playing){
-    timerEl.classList.remove('hidden');
-    var phLabel=gamePhase==='lobby'?'LOBBY':'BATTLE ROYALE';
-    timerEl.querySelector('.phase-label').textContent=phLabel;
-    timerEl.querySelector('.time').textContent=formatTime(timeLeft);
-    timerEl.querySelector('.alive-count').textContent=gamePhase==='playing'?('Vivos: '+aliveCount):'';
-  } else {
-    timerEl.classList.add('hidden');
-  }
-
   if(!serverState||!playing)return;
 
-  // Find camera target: own player if alive, or first alive player for spectating
-  var camTarget=null;
   var me=serverState.players[myId];
-  if(me&&me.segments&&me.segments.length){camTarget=me;}
-  else{
-    for(var sid in serverState.players){var sp=serverState.players[sid];if(sp.segments&&sp.segments.length){camTarget=sp;break;}}
-  }
+  if(!me||!me.segments||!me.segments.length)return;
 
-  var cx,cy;
-  if(camTarget){
-    var camSegs=getSmoothedSegs(camTarget===me?myId:'_cam',camTarget.segments);
-    cx=camSegs[0].x;cy=camSegs[0].y;
-  } else {
-    // No players alive - center on map
-    var mb=mapBounds;
-    cx=(mb.x1+mb.x2)/2;cy=(mb.y1+mb.y2)/2;
-  }
+  // Smooth all players every frame
+  var mySegs=getSmoothedSegs(myId,me.segments);
+  var cx=mySegs[0].x,cy=mySegs[0].y;
 
   drawGrid(cx,cy);drawBorder(cx,cy);
   drawFood(serverState.food,cx,cy);drawPowerups(serverState.powerups||[],cx,cy);
 
   for(var id in serverState.players){
+    if(id===myId)continue;
     var p=serverState.players[id];
     var segs=getSmoothedSegs(id,p.segments);
     drawSnake(segs,p.skin,p.name,p.boosting,p.effects,cx,cy);
   }
+  drawSnake(mySegs,me.skin,me.name,me.boosting,me.effects,cx,cy);
 
-  if(!isTouch&&!isSpectating){ctx.beginPath();ctx.arc(mouseX,mouseY,3.5,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1.5;ctx.stroke();}
+  if(!isTouch){ctx.beginPath();ctx.arc(mouseX,mouseY,3.5,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1.5;ctx.stroke();}
 
-  document.getElementById('score').textContent=isSpectating?'Espectador':'Largo: '+lastScore;
+  document.getElementById('score').textContent='Largo: '+lastScore;
   var bp=Math.max(0,(lastScore-5)/(lastScore||1))*100;
   document.getElementById('boostFill').style.width=(boosting?Math.max(0,bp-20):bp)+'%';
-  if(me)updateFx(me.effects);
+  updateFx(me.effects);
 
   if(++lbFrame%6===0){var lbh='';for(var li=0;li<leaderboard.length;li++){var e=leaderboard[li];var u=me&&e.name===me.name;
     lbh+='<div class="lb-entry'+(u?' you':'')+'"><span class="lb-name">'+(li+1)+'. '+e.name+'</span><span>'+e.score+'</span></div>';}
