@@ -20,8 +20,8 @@ const START_LENGTH = 15;
 const FOOD_GROW = 1;
 const SEG_DIST_SQ = SEGMENT_DIST * SEGMENT_DIST;
 
-const LOBBY_TIME = 120;    // 2 min lobby
-const MATCH_TIME = 300;    // 5 min match
+const LOBBY_TIME = 60;     // 1 min lobby
+const MATCH_TIME = 180;    // 3 min match
 const SHRINK_INTERVAL = 20; // shrink every 20s
 const MAP_INITIAL = 2000;
 const MAP_MIN = 300;
