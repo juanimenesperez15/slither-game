@@ -287,7 +287,8 @@ function getInterpolatedPlayer(id){
   if(!a)return b;
   var interval=stateBTime-stateATime;
   if(interval<=0)interval=33;
-  var t=Math.min((Date.now()-stateBTime)/interval+1,2); // 1=at stateB, >1=extrapolate
+  // t goes from 0 (at stateA) to 1 (at stateB), clamped - no extrapolation
+  var t=Math.min((Date.now()-stateATime)/interval,1);
   return{
     name:b.name,skin:b.skin,boosting:b.boosting,effects:b.effects,
     segments:lerpSegs(a.segments,b.segments,t)
