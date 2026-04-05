@@ -133,7 +133,7 @@ setInterval(() => {
     if (newHead.x < 0 || newHead.x > WORLD_W || newHead.y < 0 || newHead.y > WORLD_H) {
       p.alive = false;
       dropFood(p.segments);
-      io.to(id).emit('dead', { killer: null });
+      io.to(id).emit('dead', { killer: null, score: p.segments.length });
       continue;
     }
 
@@ -184,7 +184,7 @@ setInterval(() => {
             other.segments.push({ x: last.x, y: last.y });
           }
 
-          io.to(id).emit('dead', { killer: other.name });
+          io.to(id).emit('dead', { killer: other.name, score: p.segments.length });
           break;
         }
       }
