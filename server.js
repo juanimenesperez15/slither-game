@@ -5,14 +5,18 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  pingInterval: 5000,
+  pingTimeout: 10000,
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Game config
 const WORLD_W = 4000;
 const WORLD_H = 4000;
-const TICK_RATE = 60;
+const GAME_TPS = 60;       // Physics ticks per second
+const NET_TPS = 20;         // Network sends per second
 const FOOD_COUNT = 500;
 const SPEED = 3.2;
 const BOOST_SPEED = 5.5;
@@ -24,7 +28,6 @@ const FOOD_GROW = 1;
 const players = {};
 let food = [];
 
-// Colors for snakes
 const SNAKE_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
   '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
@@ -45,7 +48,6 @@ function spawnFood() {
   };
 }
 
-// Initialize food
 for (let i = 0; i < FOOD_COUNT; i++) {
   food.push(spawnFood());
 }
@@ -87,10 +89,10 @@ function dropFood(segments) {
   }
 }
 
-function dist(a, b) {
+function distSq(a, b) {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
-  return Math.sqrt(dx * dx + dy * dy);
+  return dx * dx + dy * dy;
 }
 
 function angleLerp(a, b, t) {
@@ -100,38 +102,34 @@ function angleLerp(a, b, t) {
   return a + diff * t;
 }
 
-// Game loop
+// Round coords to save bandwidth
+function roundSeg(s) {
+  return { x: Math.round(s.x), y: Math.round(s.y) };
+}
+
+// ── Physics loop (60 TPS) ──
 setInterval(() => {
-  // Update each player
   for (const id in players) {
     const p = players[id];
     if (!p.alive) continue;
 
-    // Smooth turn
     p.angle = angleLerp(p.angle, p.targetAngle, 0.12);
-
     const speed = p.boosting ? BOOST_SPEED : SPEED;
 
-    // Lose segments when boosting
+    // Boost cost
     if (p.boosting && p.segments.length > 5 && Math.random() < 0.15) {
       const tail = p.segments.pop();
-      food.push({
-        x: tail.x,
-        y: tail.y,
-        r: 4,
-        color: p.color,
-      });
+      food.push({ x: tail.x, y: tail.y, r: 4, color: p.color });
       p.score = Math.max(0, p.score - 2);
     }
 
-    // Move head
     const head = p.segments[0];
     const newHead = {
       x: head.x + Math.cos(p.angle) * speed,
       y: head.y + Math.sin(p.angle) * speed,
     };
 
-    // World boundaries - die on border hit
+    // Border death
     if (newHead.x < 0 || newHead.x > WORLD_W || newHead.y < 0 || newHead.y > WORLD_H) {
       p.alive = false;
       dropFood(p.segments);
@@ -141,48 +139,46 @@ setInterval(() => {
 
     p.segments.unshift(newHead);
 
-    // Maintain segment spacing
     for (let i = 1; i < p.segments.length; i++) {
       const prev = p.segments[i - 1];
       const curr = p.segments[i];
-      const d = dist(prev, curr);
-      if (d > SEGMENT_DIST) {
+      const dsq = distSq(prev, curr);
+      if (dsq > SEGMENT_DIST * SEGMENT_DIST) {
+        const d = Math.sqrt(dsq);
         const ratio = SEGMENT_DIST / d;
         curr.x = prev.x + (curr.x - prev.x) * ratio;
         curr.y = prev.y + (curr.y - prev.y) * ratio;
       }
     }
 
-    // Remove extra tail segment (constant length unless growing)
     if (p.segments.length > START_LENGTH + p.score) {
       p.segments.pop();
     }
 
-    // Eat food
+    // Eat food (use distSq to avoid sqrt)
+    const eatRadSq = (14 + 5) * (14 + 5); // approx max
     for (let i = food.length - 1; i >= 0; i--) {
       const f = food[i];
-      if (dist(newHead, f) < f.r + 14) {
+      const threshold = f.r + 14;
+      if (distSq(newHead, f) < threshold * threshold) {
         p.score += FOOD_GROW;
         food[i] = spawnFood();
       }
     }
 
-    // Collision with other snakes
+    // Snake collision (use distSq)
+    const collisionRadSq = 16 * 16;
     for (const otherId in players) {
       if (otherId === id) continue;
       const other = players[otherId];
       if (!other.alive) continue;
 
-      // Check head vs other body (skip first 5 segments to avoid unfair collisions)
       for (let i = 5; i < other.segments.length; i++) {
-        const seg = other.segments[i];
-        if (dist(newHead, seg) < 16) {
-          // This player dies
+        if (distSq(newHead, other.segments[i]) < collisionRadSq) {
           p.alive = false;
           dropFood(p.segments);
           other.score += Math.floor(p.segments.length / 3);
 
-          // Add segments to killer
           for (let j = 0; j < Math.floor(p.segments.length / 5); j++) {
             const last = other.segments[other.segments.length - 1];
             other.segments.push({ x: last.x, y: last.y });
@@ -194,56 +190,73 @@ setInterval(() => {
       }
     }
   }
+}, 1000 / GAME_TPS);
 
-  // Build leaderboard
+// ── Network loop (20 TPS) ──
+setInterval(() => {
   const leaderboard = Object.values(players)
     .filter(p => p.alive)
     .sort((a, b) => b.segments.length - a.segments.length)
     .slice(0, 10)
-    .map(p => ({ name: p.name, score: p.segments.length }));
+    .map(p => ({ n: p.name, s: p.segments.length }));
 
-  // Send state to each player (only nearby data)
   for (const id in players) {
     const p = players[id];
     if (!p.alive) continue;
 
     const head = p.segments[0];
     const viewDist = 900;
+    const viewDistSq = viewDist * viewDist;
 
-    // Nearby players
-    const nearPlayers = {};
+    // Nearby players - send compressed segments
+    const np = {};
     for (const oid in players) {
       const op = players[oid];
       if (!op.alive) continue;
-      // Check if any segment is visible
       const oh = op.segments[0];
-      if (Math.abs(oh.x - head.x) < viewDist + op.segments.length * SEGMENT_DIST ||
-          Math.abs(oh.y - head.y) < viewDist + op.segments.length * SEGMENT_DIST) {
-        nearPlayers[oid] = {
-          name: op.name,
-          color: op.color,
-          segments: op.segments,
-          boosting: op.boosting,
+      const dx = Math.abs(oh.x - head.x);
+      const dy = Math.abs(oh.y - head.y);
+      const extraDist = op.segments.length * SEGMENT_DIST;
+      if (dx < viewDist + extraDist && dy < viewDist + extraDist) {
+        // Sample segments for long snakes to reduce data
+        let segs;
+        if (op.segments.length > 80) {
+          segs = [];
+          const step = Math.floor(op.segments.length / 60);
+          for (let i = 0; i < op.segments.length; i += step) {
+            segs.push(roundSeg(op.segments[i]));
+          }
+        } else {
+          segs = op.segments.map(roundSeg);
+        }
+        np[oid] = {
+          n: op.name,
+          c: op.color,
+          s: segs,
+          b: op.boosting ? 1 : 0,
         };
       }
     }
 
     // Nearby food
-    const nearFood = food.filter(f =>
-      Math.abs(f.x - head.x) < viewDist &&
-      Math.abs(f.y - head.y) < viewDist
-    );
+    const nf = [];
+    for (let i = 0; i < food.length; i++) {
+      const f = food[i];
+      if (Math.abs(f.x - head.x) < viewDist && Math.abs(f.y - head.y) < viewDist) {
+        nf.push({ x: Math.round(f.x), y: Math.round(f.y), r: Math.round(f.r), c: f.color });
+      }
+    }
 
-    io.to(id).emit('state', {
-      players: nearPlayers,
-      food: nearFood,
-      you: id,
-      score: p.segments.length,
-      leaderboard,
-      world: { w: WORLD_W, h: WORLD_H },
+    io.volatile.to(id).emit('s', {
+      p: np,
+      f: nf,
+      i: id,
+      sc: p.segments.length,
+      lb: leaderboard,
+      t: Date.now(),
     });
   }
-}, 1000 / TICK_RATE);
+}, 1000 / NET_TPS);
 
 // Socket connections
 io.on('connection', (socket) => {
@@ -281,6 +294,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3333;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🐍 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📡 Para jugar en LAN, compartí tu IP local con el puerto ${PORT}`);
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

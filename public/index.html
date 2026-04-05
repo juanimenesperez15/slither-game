@@ -20,266 +20,106 @@
     }
     canvas#game { display: block; }
 
-    /* ── Menu ── */
     #menu {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      background: radial-gradient(ellipse at center, rgba(20, 20, 50, 0.95), rgba(8, 8, 22, 0.98));
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      z-index: 100; background: radial-gradient(ellipse at center, rgba(20,20,50,0.95), rgba(8,8,22,0.98));
       backdrop-filter: blur(12px);
     }
     #menu.hidden { display: none; }
-
     .menu-box {
-      text-align: center;
-      padding: 44px 48px;
-      border-radius: 24px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-      max-width: 92vw;
+      text-align: center; padding: 44px 48px; border-radius: 24px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4); max-width: 92vw;
     }
     .menu-box h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(30px, 7vw, 48px);
-      font-weight: 800;
-      margin-bottom: 6px;
-      background: linear-gradient(135deg, #6EE7B7, #3B82F6, #A78BFA);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -1px;
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(30px, 7vw, 48px); font-weight: 800;
+      margin-bottom: 6px; background: linear-gradient(135deg, #6EE7B7, #3B82F6, #A78BFA);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;
     }
-    .menu-box .subtitle {
-      color: rgba(255,255,255,0.35);
-      margin-bottom: 28px;
-      font-size: 14px;
-      font-weight: 400;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
+    .menu-box .subtitle { color: rgba(255,255,255,0.35); margin-bottom: 28px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
     #nameInput {
-      display: block;
-      width: 260px;
-      max-width: 80vw;
-      margin: 0 auto 16px;
-      padding: 13px 20px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 17px;
-      font-weight: 600;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
-      background: rgba(255,255,255,0.05);
-      color: white;
-      text-align: center;
-      outline: none;
+      display: block; width: 260px; max-width: 80vw; margin: 0 auto 16px; padding: 13px 20px;
+      font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 600;
+      border: 2px solid rgba(255,255,255,0.1); border-radius: 14px;
+      background: rgba(255,255,255,0.05); color: white; text-align: center; outline: none;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
-    #nameInput:focus {
-      border-color: rgba(110, 231, 183, 0.5);
-      box-shadow: 0 0 20px rgba(110, 231, 183, 0.1);
-    }
+    #nameInput:focus { border-color: rgba(110,231,183,0.5); box-shadow: 0 0 20px rgba(110,231,183,0.1); }
     #nameInput::placeholder { color: rgba(255,255,255,0.2); }
-
     .play-btn {
-      display: block;
-      width: 260px;
-      max-width: 80vw;
-      margin: 0 auto;
-      padding: 14px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #6EE7B7, #3B82F6);
-      color: #080816;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      display: block; width: 260px; max-width: 80vw; margin: 0 auto; padding: 14px;
+      font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 1px;
+      border: none; border-radius: 14px; background: linear-gradient(135deg, #6EE7B7, #3B82F6);
+      color: #080816; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
-    .play-btn:hover {
-      transform: scale(1.03);
-      box-shadow: 0 8px 30px rgba(110, 231, 183, 0.3);
-    }
+    .play-btn:hover { transform: scale(1.03); box-shadow: 0 8px 30px rgba(110,231,183,0.3); }
     .play-btn:active { transform: scale(0.98); }
+    .controls-hint { margin-top: 22px; color: rgba(255,255,255,0.25); font-size: 12px; line-height: 1.9; letter-spacing: 0.5px; }
 
-    .controls-hint {
-      margin-top: 22px;
-      color: rgba(255,255,255,0.25);
-      font-size: 12px;
-      line-height: 1.9;
-      letter-spacing: 0.5px;
-    }
-
-    /* ── Death screen ── */
     #deathScreen {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 90;
-      background: rgba(8, 8, 22, 0.88);
-      backdrop-filter: blur(8px);
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      z-index: 90; background: rgba(8,8,22,0.88); backdrop-filter: blur(8px);
     }
     #deathScreen.show { display: flex; }
     .death-box {
-      text-align: center;
-      padding: 36px 44px;
-      border-radius: 24px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-      max-width: 92vw;
+      text-align: center; padding: 36px 44px; border-radius: 24px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(239,68,68,0.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4); max-width: 92vw;
     }
-    .death-box h2 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 30px;
-      font-weight: 800;
-      color: #EF4444;
-      margin-bottom: 8px;
-    }
+    .death-box h2 { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 800; color: #EF4444; margin-bottom: 8px; }
     .death-box p { color: rgba(255,255,255,0.45); margin-bottom: 14px; font-size: 14px; }
     #deathScore {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 52px;
-      font-weight: 800;
+      font-family: 'Space Grotesk', sans-serif; font-size: 52px; font-weight: 800;
       background: linear-gradient(135deg, #6EE7B7, #3B82F6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    /* ── HUD ── */
-    #hud {
-      position: fixed;
-      top: 14px;
-      left: 14px;
-      z-index: 50;
-      pointer-events: none;
-    }
-    #score {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      color: rgba(255,255,255,0.85);
-      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
-    }
+    #hud { position: fixed; top: 14px; left: 14px; z-index: 50; pointer-events: none; }
+    #score { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.85); text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
 
-    /* ── Leaderboard ── */
     #leaderboard {
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      z-index: 50;
-      pointer-events: none;
-      background: rgba(0,0,0,0.35);
-      border-radius: 14px;
-      padding: 12px 16px;
-      min-width: 155px;
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.05);
+      position: fixed; top: 14px; right: 14px; z-index: 50; pointer-events: none;
+      background: rgba(0,0,0,0.35); border-radius: 14px; padding: 12px 16px; min-width: 155px;
+      backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.05);
     }
-    #leaderboard h3 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: rgba(255,255,255,0.3);
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-    .lb-entry {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      padding: 2px 0;
-      color: rgba(255,255,255,0.55);
-      font-weight: 400;
-    }
+    #leaderboard h3 { font-family: 'Space Grotesk', sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.3); margin-bottom: 8px; font-weight: 600; }
+    .lb-entry { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; color: rgba(255,255,255,0.55); }
     .lb-entry.you { color: #6EE7B7; font-weight: 700; }
     .lb-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* ── Minimap ── */
     #minimap {
-      position: fixed;
-      bottom: 14px;
-      left: 14px;
-      z-index: 50;
-      pointer-events: none;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(0,0,0,0.35);
+      position: fixed; bottom: 14px; left: 14px; z-index: 50; pointer-events: none;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.35);
     }
 
-    /* ── Boost bar ── */
     #boostBar {
-      position: fixed;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 50;
-      pointer-events: none;
-      width: 150px;
-      height: 5px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 3px;
-      overflow: hidden;
+      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 50;
+      pointer-events: none; width: 150px; height: 5px; background: rgba(255,255,255,0.08);
+      border-radius: 3px; overflow: hidden;
     }
-    #boostFill {
-      height: 100%;
-      background: linear-gradient(90deg, #F59E0B, #EF4444);
-      border-radius: 3px;
-      transition: width 0.2s;
-      width: 100%;
-    }
+    #boostFill { height: 100%; background: linear-gradient(90deg, #F59E0B, #EF4444); border-radius: 3px; transition: width 0.15s; width: 100%; }
 
-    /* ── Mobile boost button ── */
     #boostBtn {
-      display: none;
-      position: fixed;
-      bottom: 30px;
-      right: 14px;
-      z-index: 60;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: rgba(245, 158, 11, 0.15);
-      border: 2px solid rgba(245, 158, 11, 0.35);
-      color: rgba(255,255,255,0.8);
-      font-size: 28px;
-      line-height: 1;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition: background 0.15s, transform 0.15s;
-      align-items: center;
-      justify-content: center;
+      display: none; position: fixed; bottom: 30px; right: 14px; z-index: 60;
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(245,158,11,0.15); border: 2px solid rgba(245,158,11,0.35);
+      color: rgba(255,255,255,0.8); font-size: 28px; line-height: 1; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; transition: background 0.15s, transform 0.15s;
+      align-items: center; justify-content: center;
     }
-    #boostBtn.active {
-      background: rgba(245, 158, 11, 0.45);
-      border-color: rgba(245, 158, 11, 0.7);
-      transform: scale(1.08);
-    }
+    #boostBtn.active { background: rgba(245,158,11,0.45); border-color: rgba(245,158,11,0.7); transform: scale(1.08); }
 
-    /* ── Mobile adjustments ── */
     @media (max-width: 700px) {
       .menu-box { padding: 32px 28px; }
       #leaderboard { padding: 8px 11px; min-width: 120px; }
-      #leaderboard h3 { font-size: 9px; }
       .lb-entry { font-size: 11px; }
       .lb-name { max-width: 68px; }
       #minimap { width: 90px !important; height: 90px !important; }
       #boostBar { width: 100px; }
       #score { font-size: 16px; }
     }
-
-    @media (hover: hover) and (pointer: fine) {
-      #game { cursor: none; }
-    }
+    @media (hover: hover) and (pointer: fine) { #game { cursor: none; } }
   </style>
 </head>
 <body>
@@ -290,9 +130,7 @@
     <div class="subtitle">multijugador online</div>
     <input type="text" id="nameInput" placeholder="Tu nombre..." maxlength="15" autofocus value="Romano">
     <button class="play-btn" id="playBtn">JUGAR</button>
-    <div class="controls-hint" id="controlsHint">
-      Mouse = dirección &nbsp;&middot;&nbsp; Click / Espacio = turbo
-    </div>
+    <div class="controls-hint" id="controlsHint">Mouse = dirección &middot; Click / Espacio = turbo</div>
   </div>
 </div>
 
@@ -301,29 +139,17 @@
     <h2>Moriste</h2>
     <p id="deathMsg"></p>
     <div id="deathScore">0</div>
-    <p style="margin-top: 4px; font-size: 12px; color: rgba(255,255,255,0.25);">de largo</p>
+    <p style="margin-top:4px;font-size:12px;color:rgba(255,255,255,0.25)">de largo</p>
     <br>
     <button class="play-btn" id="playBtn2">REINTENTAR</button>
   </div>
 </div>
 
-<div id="hud" class="hidden">
-  <div id="score">Largo: 0</div>
-</div>
-
-<div id="leaderboard" class="hidden">
-  <h3>Top Jugadores</h3>
-  <div id="lbList"></div>
-</div>
-
+<div id="hud" class="hidden"><div id="score">Largo: 0</div></div>
+<div id="leaderboard" class="hidden"><h3>Top Jugadores</h3><div id="lbList"></div></div>
 <canvas id="minimap" class="hidden" width="130" height="130"></canvas>
-
-<div id="boostBar" class="hidden">
-  <div id="boostFill"></div>
-</div>
-
+<div id="boostBar" class="hidden"><div id="boostFill"></div></div>
 <button id="boostBtn">&#x1F680;</button>
-
 <canvas id="game"></canvas>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -335,17 +161,14 @@
   const minimapCtx = minimapCanvas.getContext('2d');
 
   let W, H;
-  function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
   resize();
   window.addEventListener('resize', resize);
 
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  const WORLD = { w: 4000, h: 4000 };
 
-  const socket = io();
-  let state = null;
+  const socket = io({ transports: ['websocket'] }); // Force websocket, skip polling
   let myId = null;
   let mouseX = W / 2;
   let mouseY = H / 2;
@@ -354,14 +177,20 @@
   let lastScore = 0;
   let touchAngle = null;
 
+  // ── Interpolation state ──
+  let prevState = null;
+  let currState = null;
+  let stateTime = 0;
+  let prevTime = 0;
+  let leaderboard = [];
+
   const menu = document.getElementById('menu');
   const deathScreen = document.getElementById('deathScreen');
   const nameInput = document.getElementById('nameInput');
   const boostBtn = document.getElementById('boostBtn');
 
   if (isTouchDevice) {
-    document.getElementById('controlsHint').innerHTML =
-      'Tocá la pantalla = dirección &nbsp;&middot;&nbsp; Botón &#x1F680; = turbo';
+    document.getElementById('controlsHint').innerHTML = 'Tocá la pantalla = dirección &middot; Botón &#x1F680; = turbo';
   }
 
   function showGameUI() {
@@ -371,247 +200,208 @@
     document.getElementById('leaderboard').classList.remove('hidden');
     document.getElementById('minimap').classList.remove('hidden');
     document.getElementById('boostBar').classList.remove('hidden');
-    if (isTouchDevice) {
-      boostBtn.style.display = 'flex';
-    }
+    if (isTouchDevice) boostBtn.style.display = 'flex';
     playing = true;
   }
 
   function hideGameUI() {
     document.getElementById('hud').classList.add('hidden');
-    if (isTouchDevice) {
-      boostBtn.style.display = 'none';
-    }
+    if (isTouchDevice) boostBtn.style.display = 'none';
   }
 
   function startGame() {
-    const name = nameInput.value.trim() || 'Gusano';
-    socket.emit('join', { name });
+    socket.emit('join', { name: nameInput.value.trim() || 'Gusano' });
     showGameUI();
   }
 
   document.getElementById('playBtn').onclick = startGame;
   document.getElementById('playBtn2').onclick = () => {
-    const name = nameInput.value.trim() || 'Gusano';
-    socket.emit('respawn', { name });
+    socket.emit('respawn', { name: nameInput.value.trim() || 'Gusano' });
     showGameUI();
   };
-  nameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') startGame();
-  });
+  nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') startGame(); });
 
-  // === DESKTOP INPUT ===
-  canvas.addEventListener('mousemove', (e) => {
-    if (!isTouchDevice) {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    }
-  });
-  window.addEventListener('mousedown', (e) => {
-    if (!isTouchDevice) boosting = true;
-  });
-  window.addEventListener('mouseup', (e) => {
-    if (!isTouchDevice) boosting = false;
-  });
-  window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') { boosting = true; e.preventDefault(); }
-  });
-  window.addEventListener('keyup', (e) => {
-    if (e.code === 'Space') boosting = false;
-  });
+  // === Desktop input ===
+  canvas.addEventListener('mousemove', (e) => { if (!isTouchDevice) { mouseX = e.clientX; mouseY = e.clientY; } });
+  window.addEventListener('mousedown', () => { if (!isTouchDevice) boosting = true; });
+  window.addEventListener('mouseup', () => { if (!isTouchDevice) boosting = false; });
+  window.addEventListener('keydown', (e) => { if (e.code === 'Space') { boosting = true; e.preventDefault(); } });
+  window.addEventListener('keyup', (e) => { if (e.code === 'Space') boosting = false; });
 
-  // === MOBILE: touch anywhere on screen = direction ===
+  // === Mobile touch-to-aim ===
   let moveTouchId = null;
-
   canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    if (!playing) return;
-    const touch = e.changedTouches[0];
-    moveTouchId = touch.identifier;
-    mouseX = touch.clientX;
-    mouseY = touch.clientY;
-    touchAngle = Math.atan2(mouseY - H / 2, mouseX - W / 2);
+    e.preventDefault(); if (!playing) return;
+    const t = e.changedTouches[0]; moveTouchId = t.identifier;
+    mouseX = t.clientX; mouseY = t.clientY;
+    touchAngle = Math.atan2(mouseY - H/2, mouseX - W/2);
   }, { passive: false });
-
   canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    if (!playing) return;
-    for (const touch of e.changedTouches) {
-      if (touch.identifier === moveTouchId) {
-        mouseX = touch.clientX;
-        mouseY = touch.clientY;
-        touchAngle = Math.atan2(mouseY - H / 2, mouseX - W / 2);
+    e.preventDefault(); if (!playing) return;
+    for (const t of e.changedTouches) {
+      if (t.identifier === moveTouchId) {
+        mouseX = t.clientX; mouseY = t.clientY;
+        touchAngle = Math.atan2(mouseY - H/2, mouseX - W/2);
         break;
       }
     }
   }, { passive: false });
-
   canvas.addEventListener('touchend', (e) => {
-    for (const touch of e.changedTouches) {
-      if (touch.identifier === moveTouchId) {
-        moveTouchId = null;
-        // Keep last angle, don't reset
-        break;
-      }
-    }
+    for (const t of e.changedTouches) { if (t.identifier === moveTouchId) { moveTouchId = null; break; } }
   });
 
-  // === MOBILE: boost button ===
+  // Mobile boost
   let boostTouchId = null;
-
   boostBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    boostTouchId = e.changedTouches[0].identifier;
-    boosting = true;
-    boostBtn.classList.add('active');
+    e.preventDefault(); e.stopPropagation();
+    boostTouchId = e.changedTouches[0].identifier; boosting = true; boostBtn.classList.add('active');
   }, { passive: false });
-
   boostBtn.addEventListener('touchend', (e) => {
-    for (const touch of e.changedTouches) {
-      if (touch.identifier === boostTouchId) {
-        boosting = false;
-        boostBtn.classList.remove('active');
-        boostTouchId = null;
-        break;
-      }
-    }
+    for (const t of e.changedTouches) { if (t.identifier === boostTouchId) { boosting = false; boostBtn.classList.remove('active'); boostTouchId = null; break; } }
   });
+  boostBtn.addEventListener('touchcancel', () => { boosting = false; boostBtn.classList.remove('active'); boostTouchId = null; });
 
-  boostBtn.addEventListener('touchcancel', () => {
-    boosting = false;
-    boostBtn.classList.remove('active');
-    boostTouchId = null;
-  });
-
-  // Send input
+  // Send input at 20fps (match server net rate)
   setInterval(() => {
-    if (!playing || !state) return;
-    let angle;
-    if (isTouchDevice) {
-      angle = touchAngle;
-    } else {
-      angle = Math.atan2(mouseY - H / 2, mouseX - W / 2);
-    }
-    if (angle !== null) {
-      socket.emit('input', { angle, boost: boosting });
-    }
-  }, 1000 / 30);
+    if (!playing) return;
+    const angle = isTouchDevice ? touchAngle : Math.atan2(mouseY - H/2, mouseX - W/2);
+    if (angle !== null) socket.emit('input', { angle, boost: boosting });
+  }, 50);
 
-  // Receive state
-  socket.on('state', (s) => {
-    state = s;
-    myId = s.you;
+  // ── Receive state with interpolation ──
+  socket.on('s', (s) => {
+    myId = s.i;
+    prevState = currState;
+    prevTime = stateTime;
+    // Unpack compressed format
+    const unpacked = { players: {}, food: s.f, score: s.sc };
+    for (const id in s.p) {
+      const sp = s.p[id];
+      unpacked.players[id] = { name: sp.n, color: sp.c, segments: sp.s, boosting: !!sp.b };
+    }
+    currState = unpacked;
+    stateTime = Date.now();
+    leaderboard = (s.lb || []).map(e => ({ name: e.n, score: e.s }));
+    lastScore = s.sc;
   });
 
   socket.on('dead', (data) => {
     playing = false;
-    document.getElementById('deathMsg').textContent =
-      data.killer ? `Te eliminó: ${data.killer}` : 'Tocaste el borde!';
+    document.getElementById('deathMsg').textContent = data.killer ? `Te eliminó: ${data.killer}` : 'Tocaste el borde!';
     document.getElementById('deathScore').textContent = lastScore;
     deathScreen.classList.add('show');
     hideGameUI();
   });
 
-  // ── Rendering ──
-
-  function drawGrid(camX, camY) {
-    const gridSize = 65;
-    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-    ctx.lineWidth = 1;
-
-    const startX = -((camX - W / 2) % gridSize);
-    const startY = -((camY - H / 2) % gridSize);
-
-    for (let x = startX; x < W; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, H);
-      ctx.stroke();
+  // ── Interpolation helper ──
+  function lerpSegs(prevSegs, currSegs, t) {
+    if (!prevSegs) return currSegs;
+    const len = Math.min(prevSegs.length, currSegs.length);
+    const out = [];
+    for (let i = 0; i < len; i++) {
+      out.push({
+        x: prevSegs[i].x + (currSegs[i].x - prevSegs[i].x) * t,
+        y: prevSegs[i].y + (currSegs[i].y - prevSegs[i].y) * t,
+      });
     }
-    for (let y = startY; y < H; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(W, y);
-      ctx.stroke();
+    // Add any extra segments from current
+    for (let i = len; i < currSegs.length; i++) {
+      out.push(currSegs[i]);
     }
+    return out;
   }
 
-  function drawSnake(p, camX, camY, isMe) {
-    const segs = p.segments;
-    if (segs.length < 2) return;
+  // ── Drawing ──
+  function drawGrid(camX, camY) {
+    const gs = 65;
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+    ctx.lineWidth = 1;
+    const sx = -((camX - W/2) % gs + gs) % gs;
+    const sy = -((camY - H/2) % gs + gs) % gs;
+    ctx.beginPath();
+    for (let x = sx; x < W; x += gs) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for (let y = sy; y < H; y += gs) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    ctx.stroke();
+  }
 
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = isMe ? 20 : 10;
+  function drawSnake(segs, color, name, isBoosting, isMe, camX, camY) {
+    if (segs.length < 2) return;
+    const len = segs.length;
+
+    // Draw body as single path per thickness band (batched)
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    for (let i = segs.length - 1; i >= 1; i--) {
-      const s = segs[i];
-      const prev = segs[i - 1];
-      const t = 1 - i / segs.length;
-      const alpha = 0.4 + 0.6 * t;
-      const thickness = 8 + t * 10;
+    // Draw in chunks for thickness variation
+    const bands = 4;
+    const bandSize = Math.ceil(len / bands);
 
+    for (let b = bands - 1; b >= 0; b--) {
+      const start = Math.max(1, b * bandSize);
+      const end = Math.min(len - 1, (b + 1) * bandSize);
+      if (start >= end) continue;
+
+      const t = 1 - (b * bandSize) / len;
       ctx.beginPath();
-      ctx.moveTo(s.x - camX + W / 2, s.y - camY + H / 2);
-      ctx.lineTo(prev.x - camX + W / 2, prev.y - camY + H / 2);
-      ctx.strokeStyle = p.color;
-      ctx.globalAlpha = alpha;
-      ctx.lineWidth = thickness;
+      const s0 = segs[start];
+      ctx.moveTo(s0.x - camX + W/2, s0.y - camY + H/2);
+      for (let i = start; i < end; i++) {
+        const s = segs[i];
+        ctx.lineTo(s.x - camX + W/2, s.y - camY + H/2);
+      }
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.35 + 0.65 * t;
+      ctx.lineWidth = 7 + t * 11;
       ctx.stroke();
     }
 
+    // Connect to head
+    ctx.beginPath();
+    ctx.moveTo(segs[1].x - camX + W/2, segs[1].y - camY + H/2);
+    ctx.lineTo(segs[0].x - camX + W/2, segs[0].y - camY + H/2);
+    ctx.strokeStyle = color;
     ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
+    ctx.lineWidth = 18;
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
 
     // Head
     const head = segs[0];
-    const next = segs[1] || head;
+    const next = segs[1];
     const angle = Math.atan2(head.y - next.y, head.x - next.x);
-    const hx = head.x - camX + W / 2;
-    const hy = head.y - camY + H / 2;
+    const hx = head.x - camX + W/2;
+    const hy = head.y - camY + H/2;
 
     ctx.beginPath();
     ctx.arc(hx, hy, 12, 0, Math.PI * 2);
-    ctx.fillStyle = p.color;
+    ctx.fillStyle = color;
     ctx.fill();
 
     // Eyes
     for (const side of [-1, 1]) {
-      const ex = hx + Math.cos(angle + (Math.PI / 2) * side) * 5;
-      const ey = hy + Math.sin(angle + (Math.PI / 2) * side) * 5;
-      ctx.beginPath();
-      ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(ex + Math.cos(angle) * 1.3, ey + Math.sin(angle) * 1.3, 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = '#111';
-      ctx.fill();
+      const ex = hx + Math.cos(angle + (Math.PI/2) * side) * 5;
+      const ey = hy + Math.sin(angle + (Math.PI/2) * side) * 5;
+      ctx.beginPath(); ctx.arc(ex, ey, 3.5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(ex + Math.cos(angle)*1.3, ey + Math.sin(angle)*1.3, 1.8, 0, Math.PI*2); ctx.fillStyle = '#111'; ctx.fill();
     }
 
     // Name
     ctx.font = "600 12px 'Outfit', sans-serif";
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fillText(p.name, hx, hy - 22);
+    ctx.fillText(name, hx, hy - 22);
 
     // Boost particles
-    if (p.boosting && segs.length > 2) {
-      const tail = segs[segs.length - 1];
-      const tx = tail.x - camX + W / 2;
-      const ty = tail.y - camY + H / 2;
-      for (let i = 0; i < 4; i++) {
+    if (isBoosting && len > 2) {
+      const tail = segs[len - 1];
+      const tx = tail.x - camX + W/2;
+      const ty = tail.y - camY + H/2;
+      for (let i = 0; i < 3; i++) {
         ctx.beginPath();
-        ctx.arc(
-          tx + (Math.random() - 0.5) * 24,
-          ty + (Math.random() - 0.5) * 24,
-          1.5 + Math.random() * 3,
-          0, Math.PI * 2
-        );
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = 0.2 + Math.random() * 0.4;
+        ctx.arc(tx + (Math.random()-0.5)*24, ty + (Math.random()-0.5)*24, 1.5 + Math.random()*3, 0, Math.PI*2);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.25 + Math.random() * 0.35;
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -619,124 +409,115 @@
   }
 
   function drawFood(foodList, camX, camY) {
+    // Batch all food in fewer draw calls
+    ctx.globalAlpha = 0.75;
     for (const f of foodList) {
-      const fx = f.x - camX + W / 2;
-      const fy = f.y - camY + H / 2;
-      if (fx < -20 || fx > W + 20 || fy < -20 || fy > H + 20) continue;
-
-      ctx.shadowColor = f.color;
-      ctx.shadowBlur = 10;
+      const fx = f.x - camX + W/2;
+      const fy = f.y - camY + H/2;
+      if (fx < -20 || fx > W+20 || fy < -20 || fy > H+20) continue;
       ctx.beginPath();
       ctx.arc(fx, fy, f.r, 0, Math.PI * 2);
-      ctx.fillStyle = f.color;
-      ctx.globalAlpha = 0.75;
+      ctx.fillStyle = f.c;
       ctx.fill();
     }
     ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
   }
 
-  function drawBorder(camX, camY, world) {
-    // Danger zone glow near borders
-    const bx = -camX + W / 2;
-    const by = -camY + H / 2;
+  function drawBorder(camX, camY) {
+    const bx = -camX + W/2;
+    const by = -camY + H/2;
 
-    // Red border
-    ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+    // Red border line
+    ctx.strokeStyle = 'rgba(239,68,68,0.5)';
     ctx.lineWidth = 3;
-    ctx.setLineDash([]);
-    ctx.strokeRect(bx, by, world.w, world.h);
+    ctx.strokeRect(bx, by, WORLD.w, WORLD.h);
 
-    // Outer dark area
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.04)';
-    // top
-    ctx.fillRect(bx - 2000, by - 2000, world.w + 4000, 2000);
-    // bottom
-    ctx.fillRect(bx - 2000, by + world.h, world.w + 4000, 2000);
-    // left
-    ctx.fillRect(bx - 2000, by, 2000, world.h);
-    // right
-    ctx.fillRect(bx + world.w, by, 2000, world.h);
+    // Dark outside areas
+    ctx.fillStyle = 'rgba(239,68,68,0.04)';
+    ctx.fillRect(bx - 2000, by - 2000, WORLD.w + 4000, 2000);
+    ctx.fillRect(bx - 2000, by + WORLD.h, WORLD.w + 4000, 2000);
+    ctx.fillRect(bx - 2000, by, 2000, WORLD.h);
+    ctx.fillRect(bx + WORLD.w, by, 2000, WORLD.h);
   }
 
-  function drawMinimap(world) {
-    if (!state) return;
+  function drawMinimap() {
+    if (!currState) return;
     const mw = minimapCanvas.width;
     const mh = minimapCanvas.height;
     minimapCtx.clearRect(0, 0, mw, mh);
-
-    // Border
-    minimapCtx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+    minimapCtx.strokeStyle = 'rgba(239,68,68,0.3)';
     minimapCtx.lineWidth = 1;
-    minimapCtx.strokeRect(1, 1, mw - 2, mh - 2);
-
-    for (const id in state.players) {
-      const p = state.players[id];
-      const head = p.segments[0];
-      const mx = (head.x / world.w) * mw;
-      const my = (head.y / world.h) * mh;
+    minimapCtx.strokeRect(1, 1, mw-2, mh-2);
+    for (const id in currState.players) {
+      const p = currState.players[id];
+      const h = p.segments[0];
       minimapCtx.beginPath();
-      minimapCtx.arc(mx, my, id === myId ? 4 : 2.5, 0, Math.PI * 2);
+      minimapCtx.arc((h.x/WORLD.w)*mw, (h.y/WORLD.h)*mh, id === myId ? 4 : 2.5, 0, Math.PI*2);
       minimapCtx.fillStyle = id === myId ? '#6EE7B7' : p.color;
       minimapCtx.fill();
     }
   }
 
-  // Main render loop
+  // ── Main render loop ──
   function render() {
     requestAnimationFrame(render);
 
     ctx.fillStyle = '#080816';
     ctx.fillRect(0, 0, W, H);
 
-    if (!state || !playing) return;
+    if (!currState || !playing) return;
 
-    const me = state.players[myId];
+    // Interpolation factor
+    const netInterval = 50; // 1000/20
+    const elapsed = Date.now() - stateTime;
+    const t = Math.min(elapsed / netInterval, 1.2); // Allow slight extrapolation
+
+    const me = currState.players[myId];
     if (!me) return;
 
-    const head = me.segments[0];
-    const camX = head.x;
-    const camY = head.y;
+    // Interpolate my position for smooth camera
+    const prevMe = prevState ? prevState.players[myId] : null;
+    const mySegs = lerpSegs(prevMe ? prevMe.segments : null, me.segments, t);
+    const camX = mySegs[0].x;
+    const camY = mySegs[0].y;
 
     drawGrid(camX, camY);
-    drawBorder(camX, camY, state.world);
-    drawFood(state.food, camX, camY);
+    drawBorder(camX, camY);
+    drawFood(currState.food, camX, camY);
 
-    for (const id in state.players) {
+    // Draw other snakes (interpolated)
+    for (const id in currState.players) {
       if (id === myId) continue;
-      drawSnake(state.players[id], camX, camY, false);
+      const cp = currState.players[id];
+      const pp = prevState ? prevState.players[id] : null;
+      const segs = lerpSegs(pp ? pp.segments : null, cp.segments, t);
+      drawSnake(segs, cp.color, cp.name, cp.boosting, false, camX, camY);
     }
-    drawSnake(me, camX, camY, true);
 
-    // Cursor (desktop only)
+    // Draw me (interpolated)
+    drawSnake(mySegs, me.color, me.name, me.boosting, true, camX, camY);
+
+    // Desktop cursor
     if (!isTouchDevice) {
-      ctx.beginPath();
-      ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(mouseX, mouseY, 4, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
     // HUD
-    lastScore = state.score;
-    document.getElementById('score').textContent = `Largo: ${state.score}`;
+    document.getElementById('score').textContent = `Largo: ${lastScore}`;
+    const bp = Math.max(0, (lastScore - 5) / (lastScore || 1)) * 100;
+    document.getElementById('boostFill').style.width = (boosting ? Math.max(0, bp-20) : bp) + '%';
 
-    const boostPercent = Math.max(0, (state.score - 5) / (state.score || 1)) * 100;
-    document.getElementById('boostFill').style.width =
-      boosting ? Math.max(0, boostPercent - 20) + '%' : boostPercent + '%';
-
-    // Leaderboard
-    const lbList = document.getElementById('lbList');
-    lbList.innerHTML = state.leaderboard
-      .map((e, i) => {
-        const isYou = state.players[myId] && e.name === state.players[myId].name;
-        return `<div class="lb-entry${isYou ? ' you' : ''}">
-          <span class="lb-name">${i + 1}. ${e.name}</span>
-          <span>${e.score}</span>
-        </div>`;
+    // Leaderboard (update every few frames)
+    if (Math.random() < 0.1) {
+      const lbList = document.getElementById('lbList');
+      lbList.innerHTML = leaderboard.map((e, i) => {
+        const isYou = me && e.name === me.name;
+        return `<div class="lb-entry${isYou ? ' you' : ''}"><span class="lb-name">${i+1}. ${e.name}</span><span>${e.score}</span></div>`;
       }).join('');
+    }
 
-    drawMinimap(state.world);
+    drawMinimap();
   }
 
   render();
