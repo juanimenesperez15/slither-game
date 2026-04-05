@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>El Gusanito de Romano</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a1a;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    canvas#game { display: block; }
+
+    #menu {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      background: rgba(10, 10, 26, 0.92);
+      backdrop-filter: blur(10px);
+    }
+    #menu.hidden { display: none; }
+
+    .menu-box {
+      text-align: center;
+      padding: 40px 40px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      max-width: 90vw;
+    }
+    .menu-box h1 {
+      font-size: clamp(28px, 7vw, 52px);
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #4ECDC4, #45B7D1, #FF6B6B);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .menu-box p { color: #888; margin-bottom: 24px; font-size: 15px; }
+
+    #nameInput {
+      display: block;
+      width: 260px;
+      max-width: 80vw;
+      margin: 0 auto 18px;
+      padding: 14px 20px;
+      font-size: 18px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      color: white;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    #nameInput:focus { border-color: #4ECDC4; }
+    #nameInput::placeholder { color: #555; }
+
+    .play-btn {
+      display: block;
+      width: 260px;
+      max-width: 80vw;
+      margin: 0 auto;
+      padding: 14px;
+      font-size: 20px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+      color: #0a0a1a;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .play-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 6px 30px rgba(78, 205, 196, 0.4);
+    }
+
+    .controls-hint {
+      margin-top: 20px;
+      color: #555;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    #deathScreen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 90;
+      background: rgba(10, 10, 26, 0.85);
+      backdrop-filter: blur(6px);
+    }
+    #deathScreen.show { display: flex; }
+    .death-box {
+      text-align: center;
+      padding: 35px 40px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      max-width: 90vw;
+    }
+    .death-box h2 { font-size: 32px; color: #FF6B6B; margin-bottom: 10px; }
+    .death-box p { color: #aaa; margin-bottom: 16px; }
+    #deathScore { font-size: 48px; font-weight: 700; color: #4ECDC4; }
+
+    #hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 50;
+      pointer-events: none;
+    }
+    #score {
+      font-size: 18px;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    #leaderboard {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 50;
+      pointer-events: none;
+      background: rgba(0,0,0,0.4);
+      border-radius: 12px;
+      padding: 10px 14px;
+      min-width: 150px;
+      backdrop-filter: blur(6px);
+    }
+    #leaderboard h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .lb-entry {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 2px 0;
+      color: #ccc;
+    }
+    .lb-entry.you { color: #4ECDC4; font-weight: 700; }
+    .lb-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    #minimap {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      z-index: 50;
+      pointer-events: none;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.4);
+    }
+
+    #boostBar {
+      position: fixed;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      pointer-events: none;
+      width: 160px;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    #boostFill {
+      height: 100%;
+      background: linear-gradient(90deg, #FF6B6B, #FFEAA7);
+      border-radius: 3px;
+      transition: width 0.2s;
+      width: 100%;
+    }
+
+    /* Mobile joystick */
+    #joystickArea {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 60;
+      width: 150px;
+      height: 150px;
+    }
+    #joystickBase {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      border: 2px solid rgba(255,255,255,0.12);
+    }
+    #joystickThumb {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(78, 205, 196, 0.35);
+      border: 2px solid rgba(78, 205, 196, 0.5);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: background 0.15s;
+    }
+
+    #boostBtn {
+      display: none;
+      position: fixed;
+      bottom: 40px;
+      right: 30px;
+      z-index: 60;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255, 107, 107, 0.2);
+      border: 3px solid rgba(255, 107, 107, 0.45);
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    #boostBtn.active {
+      background: rgba(255, 107, 107, 0.5);
+      border-color: rgba(255, 107, 107, 0.8);
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 700px) {
+      #leaderboard { padding: 8px 10px; min-width: 120px; }
+      #leaderboard h3 { font-size: 10px; }
+      .lb-entry { font-size: 11px; }
+      .lb-name { max-width: 70px; }
+      #minimap { width: 100px !important; height: 100px !important; bottom: 10px; right: 10px; }
+      #boostBar { bottom: 8px; width: 120px; }
+      #score { font-size: 16px; }
+    }
+
+    /* Hide mobile controls on desktop */
+    @media (hover: hover) and (pointer: fine) {
+      #game { cursor: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="menu">
+  <div class="menu-box">
+    <h1>🐍 El Gusanito de Romano</h1>
+    <p>Juego de gusanos multijugador</p>
+    <input type="text" id="nameInput" placeholder="Tu nombre..." maxlength="15" autofocus value="Romano">
+    <button class="play-btn" id="playBtn">JUGAR</button>
+    <div class="controls-hint" id="controlsHint">
+      Mouse = dirección<br>
+      Click / Espacio = turbo<br>
+    </div>
+  </div>
+</div>
+
+<div id="deathScreen">
+  <div class="death-box">
+    <h2>💀 Moriste</h2>
+    <p id="deathMsg"></p>
+    <div id="deathScore">0</div>
+    <p style="margin-top: 5px; font-size: 13px; color: #666;">de largo</p>
+    <br>
+    <button class="play-btn" id="playBtn2">REINTENTAR</button>
+  </div>
+</div>
+
+<div id="hud" class="hidden">
+  <div id="score">Largo: 0</div>
+</div>
+
+<div id="leaderboard" class="hidden">
+  <h3>Top Jugadores</h3>
+  <div id="lbList"></div>
+</div>
+
+<canvas id="minimap" class="hidden" width="140" height="140"></canvas>
+
+<div id="boostBar" class="hidden">
+  <div id="boostFill"></div>
+</div>
+
+<!-- Mobile controls -->
+<div id="joystickArea">
+  <div id="joystickBase"></div>
+  <div id="joystickThumb"></div>
+</div>
+<button id="boostBtn">TURBO</button>
+
+<canvas id="game"></canvas>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const minimapCanvas = document.getElementById('minimap');
+  const minimapCtx = minimapCanvas.getContext('2d');
+
+  let W, H;
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Detect touch device
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+  const socket = io();
+  let state = null;
+  let myId = null;
+  let mouseX = W / 2;
+  let mouseY = H / 2;
+  let boosting = false;
+  let playing = false;
+  let lastScore = 0;
+  let touchAngle = 0;
+  let joystickActive = false;
+
+  // Menu
+  const menu = document.getElementById('menu');
+  const deathScreen = document.getElementById('deathScreen');
+  const nameInput = document.getElementById('nameInput');
+
+  // Update controls hint for mobile
+  if (isTouchDevice) {
+    document.getElementById('controlsHint').innerHTML =
+      'Joystick izquierdo = dirección<br>Botón derecho = turbo';
+  }
+
+  function showGameUI() {
+    menu.classList.add('hidden');
+    deathScreen.classList.remove('show');
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('leaderboard').classList.remove('hidden');
+    document.getElementById('minimap').classList.remove('hidden');
+    document.getElementById('boostBar').classList.remove('hidden');
+    if (isTouchDevice) {
+      document.getElementById('joystickArea').style.display = 'block';
+      document.getElementById('boostBtn').style.display = 'flex';
+      document.getElementById('boostBtn').style.alignItems = 'center';
+      document.getElementById('boostBtn').style.justifyContent = 'center';
+    }
+    playing = true;
+  }
+
+  function hideGameUI() {
+    document.getElementById('hud').classList.add('hidden');
+    if (isTouchDevice) {
+      document.getElementById('joystickArea').style.display = 'none';
+      document.getElementById('boostBtn').style.display = 'none';
+    }
+  }
+
+  function startGame() {
+    const name = nameInput.value.trim() || 'Gusano';
+    socket.emit('join', { name });
+    showGameUI();
+  }
+
+  document.getElementById('playBtn').onclick = startGame;
+  document.getElementById('playBtn2').onclick = () => {
+    const name = nameInput.value.trim() || 'Gusano';
+    socket.emit('respawn', { name });
+    showGameUI();
+  };
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') startGame();
+  });
+
+  // === DESKTOP INPUT ===
+  canvas.addEventListener('mousemove', (e) => {
+    if (!isTouchDevice) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }
+  });
+  window.addEventListener('mousedown', (e) => {
+    if (!isTouchDevice) boosting = true;
+  });
+  window.addEventListener('mouseup', (e) => {
+    if (!isTouchDevice) boosting = false;
+  });
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { boosting = true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') boosting = false;
+  });
+
+  // === MOBILE JOYSTICK ===
+  const joystickArea = document.getElementById('joystickArea');
+  const joystickThumb = document.getElementById('joystickThumb');
+  const boostBtn = document.getElementById('boostBtn');
+  let joystickTouchId = null;
+  let boostTouchId = null;
+
+  const JOYSTICK_RADIUS = 75; // half of 150px area
+  const THUMB_MAX = 50; // max offset from center
+
+  function handleJoystickMove(clientX, clientY) {
+    const rect = joystickArea.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    let dx = clientX - centerX;
+    let dy = clientY - centerY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Clamp to max radius
+    if (dist > THUMB_MAX) {
+      dx = (dx / dist) * THUMB_MAX;
+      dy = (dy / dist) * THUMB_MAX;
+    }
+
+    joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+    // Only update angle if moved enough from center
+    if (dist > 10) {
+      touchAngle = Math.atan2(dy, dx);
+      joystickActive = true;
+    }
+  }
+
+  function resetJoystick() {
+    joystickThumb.style.transform = 'translate(-50%, -50%)';
+    joystickActive = false;
+    joystickTouchId = null;
+  }
+
+  // Touch events for joystick
+  joystickArea.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    joystickTouchId = touch.identifier;
+    handleJoystickMove(touch.clientX, touch.clientY);
+  }, { passive: false });
+
+  joystickArea.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === joystickTouchId) {
+        handleJoystickMove(touch.clientX, touch.clientY);
+        break;
+      }
+    }
+  }, { passive: false });
+
+  joystickArea.addEventListener('touchend', (e) => {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === joystickTouchId) {
+        resetJoystick();
+        break;
+      }
+    }
+  });
+
+  joystickArea.addEventListener('touchcancel', () => {
+    resetJoystick();
+  });
+
+  // Touch events for boost button
+  boostBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    boostTouchId = e.changedTouches[0].identifier;
+    boosting = true;
+    boostBtn.classList.add('active');
+  }, { passive: false });
+
+  boostBtn.addEventListener('touchend', (e) => {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === boostTouchId) {
+        boosting = false;
+        boostBtn.classList.remove('active');
+        boostTouchId = null;
+        break;
+      }
+    }
+  });
+
+  boostBtn.addEventListener('touchcancel', () => {
+    boosting = false;
+    boostBtn.classList.remove('active');
+    boostTouchId = null;
+  });
+
+  // Prevent default touch on canvas (no scrolling/zooming during gameplay)
+  canvas.addEventListener('touchstart', (e) => { if (playing) e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => { if (playing) e.preventDefault(); }, { passive: false });
+
+  // Also support touch directly on canvas for aiming (alternative: tap-to-aim)
+  // This handles the case where user touches the game area itself on mobile
+  let canvasTouchId = null;
+  canvas.addEventListener('touchstart', (e) => {
+    if (!playing || isTouchDevice) return; // joystick handles it on touch devices
+  });
+
+  // Send input
+  setInterval(() => {
+    if (!playing || !state) return;
+    let angle;
+    if (isTouchDevice) {
+      angle = joystickActive ? touchAngle : null;
+    } else {
+      angle = Math.atan2(mouseY - H / 2, mouseX - W / 2);
+    }
+    if (angle !== null) {
+      socket.emit('input', { angle, boost: boosting });
+    }
+  }, 1000 / 30);
+
+  // Receive state
+  socket.on('state', (s) => {
+    state = s;
+    myId = s.you;
+  });
+
+  socket.on('dead', (data) => {
+    playing = false;
+    document.getElementById('deathMsg').textContent =
+      data.killer ? `Te eliminó: ${data.killer}` : 'Chocaste!';
+    document.getElementById('deathScore').textContent = lastScore;
+    deathScreen.classList.add('show');
+    hideGameUI();
+  });
+
+  // Grid pattern
+  function drawGrid(camX, camY) {
+    const gridSize = 60;
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+
+    const startX = -((camX - W / 2) % gridSize);
+    const startY = -((camY - H / 2) % gridSize);
+
+    for (let x = startX; x < W; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+    }
+    for (let y = startY; y < H; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
+  }
+
+  // Draw a snake
+  function drawSnake(p, camX, camY, isMe) {
+    const segs = p.segments;
+    if (segs.length < 2) return;
+
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = isMe ? 18 : 12;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    for (let i = segs.length - 1; i >= 1; i--) {
+      const s = segs[i];
+      const prev = segs[i - 1];
+      const alpha = 0.5 + 0.5 * (1 - i / segs.length);
+      const thickness = 10 + (1 - i / segs.length) * 8;
+
+      ctx.beginPath();
+      ctx.moveTo(s.x - camX + W / 2, s.y - camY + H / 2);
+      ctx.lineTo(prev.x - camX + W / 2, prev.y - camY + H / 2);
+      ctx.strokeStyle = p.color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = thickness;
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+
+    // Head
+    const head = segs[0];
+    const next = segs[1] || head;
+    const angle = Math.atan2(head.y - next.y, head.x - next.x);
+    const hx = head.x - camX + W / 2;
+    const hy = head.y - camY + H / 2;
+
+    ctx.beginPath();
+    ctx.arc(hx, hy, 11, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+
+    // Eyes
+    const eyeDist = 5;
+    const eyeAngle = Math.PI / 2;
+    for (const side of [-1, 1]) {
+      const ex = hx + Math.cos(angle + eyeAngle * side) * eyeDist;
+      const ey = hy + Math.sin(angle + eyeAngle * side) * eyeDist;
+      ctx.beginPath();
+      ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex + Math.cos(angle) * 1.2, ey + Math.sin(angle) * 1.2, 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#111';
+      ctx.fill();
+    }
+
+    // Name
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText(p.name, hx, hy - 22);
+
+    // Boost particles
+    if (p.boosting && segs.length > 2) {
+      const tail = segs[segs.length - 1];
+      const tx = tail.x - camX + W / 2;
+      const ty = tail.y - camY + H / 2;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(
+          tx + (Math.random() - 0.5) * 20,
+          ty + (Math.random() - 0.5) * 20,
+          2 + Math.random() * 3,
+          0, Math.PI * 2
+        );
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.3 + Math.random() * 0.3;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Draw food
+  function drawFood(foodList, camX, camY) {
+    for (const f of foodList) {
+      const fx = f.x - camX + W / 2;
+      const fy = f.y - camY + H / 2;
+      if (fx < -20 || fx > W + 20 || fy < -20 || fy > H + 20) continue;
+
+      ctx.shadowColor = f.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(fx, fy, f.r, 0, Math.PI * 2);
+      ctx.fillStyle = f.color;
+      ctx.globalAlpha = 0.8;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
+
+  // Draw world border
+  function drawBorder(camX, camY, world) {
+    ctx.strokeStyle = 'rgba(255, 107, 107, 0.4)';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([15, 10]);
+    ctx.strokeRect(
+      -camX + W / 2,
+      -camY + H / 2,
+      world.w,
+      world.h
+    );
+    ctx.setLineDash([]);
+  }
+
+  // Draw minimap
+  function drawMinimap(world) {
+    if (!state) return;
+    const mw = minimapCanvas.width;
+    const mh = minimapCanvas.height;
+    minimapCtx.clearRect(0, 0, mw, mh);
+    minimapCtx.fillStyle = 'rgba(0,0,0,0.3)';
+    minimapCtx.fillRect(0, 0, mw, mh);
+
+    for (const id in state.players) {
+      const p = state.players[id];
+      const head = p.segments[0];
+      const mx = (head.x / world.w) * mw;
+      const my = (head.y / world.h) * mh;
+      minimapCtx.beginPath();
+      minimapCtx.arc(mx, my, id === myId ? 4 : 2.5, 0, Math.PI * 2);
+      minimapCtx.fillStyle = id === myId ? '#4ECDC4' : p.color;
+      minimapCtx.fill();
+    }
+  }
+
+  // Main render loop
+  function render() {
+    requestAnimationFrame(render);
+
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, W, H);
+
+    if (!state || !playing) return;
+
+    const me = state.players[myId];
+    if (!me) return;
+
+    const head = me.segments[0];
+    const camX = head.x;
+    const camY = head.y;
+
+    drawGrid(camX, camY);
+    drawBorder(camX, camY, state.world);
+    drawFood(state.food, camX, camY);
+
+    for (const id in state.players) {
+      if (id === myId) continue;
+      drawSnake(state.players[id], camX, camY, false);
+    }
+    drawSnake(me, camX, camY, true);
+
+    // Cursor (desktop only)
+    if (!isTouchDevice) {
+      ctx.beginPath();
+      ctx.arc(mouseX, mouseY, 5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // HUD
+    lastScore = state.score;
+    document.getElementById('score').textContent = `Largo: ${state.score}`;
+
+    // Boost bar
+    const boostPercent = Math.max(0, (state.score - 5) / (state.score || 1)) * 100;
+    document.getElementById('boostFill').style.width =
+      boosting ? Math.max(0, boostPercent - 20) + '%' : boostPercent + '%';
+
+    // Leaderboard
+    const lbList = document.getElementById('lbList');
+    lbList.innerHTML = state.leaderboard
+      .map((e, i) => {
+        const isYou = state.players[myId] && e.name === state.players[myId].name;
+        return `<div class="lb-entry${isYou ? ' you' : ''}">
+          <span class="lb-name">${i + 1}. ${e.name}</span>
+          <span>${e.score}</span>
+        </div>`;
+      }).join('');
+
+    drawMinimap(state.world);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
