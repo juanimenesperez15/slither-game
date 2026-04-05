@@ -27,6 +27,7 @@ const FOOD_GROW = 1;
 // State
 const players = {};
 let food = [];
+const allTimeScores = []; // Global ranking of all players who have died
 
 const SNAKE_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
@@ -52,7 +53,7 @@ for (let i = 0; i < FOOD_COUNT; i++) {
   food.push(spawnFood());
 }
 
-function createPlayer(id, name) {
+function createPlayer(id, name, skin) {
   const x = 200 + Math.random() * (WORLD_W - 400);
   const y = 200 + Math.random() * (WORLD_H - 400);
   const angle = Math.random() * Math.PI * 2;
@@ -67,6 +68,7 @@ function createPlayer(id, name) {
     id,
     name: name || 'Gusano',
     color: randomColor(),
+    skin: skin || 'classic',
     segments,
     angle,
     targetAngle: angle,
@@ -107,6 +109,16 @@ function roundSeg(s) {
   return { x: Math.round(s.x), y: Math.round(s.y) };
 }
 
+function addAllTimeScore(name, score) {
+  allTimeScores.push({ name, score, time: Date.now() });
+  allTimeScores.sort((a, b) => b.score - a.score);
+  if (allTimeScores.length > 50) allTimeScores.length = 50;
+}
+
+function getTopScores() {
+  return allTimeScores.slice(0, 20).map(e => ({ n: e.name, s: e.score }));
+}
+
 // ── Physics loop (60 TPS) ──
 setInterval(() => {
   for (const id in players) {
@@ -132,8 +144,10 @@ setInterval(() => {
     // Border death
     if (newHead.x < 0 || newHead.x > WORLD_W || newHead.y < 0 || newHead.y > WORLD_H) {
       p.alive = false;
+      const finalScore = p.segments.length;
       dropFood(p.segments);
-      io.to(id).emit('dead', { killer: null, score: p.segments.length });
+      addAllTimeScore(p.name, finalScore);
+      io.to(id).emit('dead', { killer: null, score: finalScore, ranking: getTopScores() });
       continue;
     }
 
@@ -184,7 +198,9 @@ setInterval(() => {
             other.segments.push({ x: last.x, y: last.y });
           }
 
-          io.to(id).emit('dead', { killer: other.name, score: p.segments.length });
+          const finalScore = p.segments.length;
+          addAllTimeScore(p.name, finalScore);
+          io.to(id).emit('dead', { killer: other.name, score: finalScore, ranking: getTopScores() });
           break;
         }
       }
@@ -232,6 +248,7 @@ setInterval(() => {
         np[oid] = {
           n: op.name,
           c: op.color,
+          sk: op.skin,
           s: segs,
           b: op.boosting ? 1 : 0,
         };
@@ -262,10 +279,14 @@ setInterval(() => {
 io.on('connection', (socket) => {
   console.log(`Conectado: ${socket.id}`);
 
+  // Send global ranking on connect
+  socket.emit('ranking', getTopScores());
+
   socket.on('join', (data) => {
     const name = (data.name || 'Gusano').substring(0, 15);
-    players[socket.id] = createPlayer(socket.id, name);
-    console.log(`${name} se unió al juego`);
+    const skin = data.skin || 'classic';
+    players[socket.id] = createPlayer(socket.id, name, skin);
+    console.log(`${name} se unió al juego (skin: ${skin})`);
   });
 
   socket.on('input', (data) => {
@@ -279,7 +300,8 @@ io.on('connection', (socket) => {
 
   socket.on('respawn', (data) => {
     const name = (data.name || 'Gusano').substring(0, 15);
-    players[socket.id] = createPlayer(socket.id, name);
+    const skin = data.skin || 'classic';
+    players[socket.id] = createPlayer(socket.id, name, skin);
   });
 
   socket.on('disconnect', () => {
