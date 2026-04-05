@@ -252,31 +252,47 @@ setInterval(() => {
       }
     }
 
-    // Snake collision (ghost = pass through, never collide with self)
+    // Snake collision (ghost = pass through, includes self-collision)
     if (!hasEffect(p, 'ghost') && p.alive) {
       const collisionRadSq = 16 * 16;
       let died = false;
-      for (const otherId in players) {
-        if (otherId === id) continue; // never self-collide
-        if (died) break;
-        const other = players[otherId];
-        if (!other.alive) continue;
 
-        for (let i = 5; i < other.segments.length; i++) {
-          if (distSq(newHead, other.segments[i]) < collisionRadSq) {
-            if (hasEffect(p, 'shield')) {
-              delete p.effects.shield;
-              died = false; // shield absorbed the hit
-            } else {
-              other.score += Math.floor(p.segments.length / 3);
-              for (let j = 0; j < Math.floor(p.segments.length / 5); j++) {
-                const last = other.segments[other.segments.length - 1];
-                other.segments.push({ x: last.x, y: last.y });
+      // Self-collision: skip first 15 segments to avoid instant death on tight turns
+      for (let i = 15; i < p.segments.length; i++) {
+        if (distSq(newHead, p.segments[i]) < collisionRadSq) {
+          if (hasEffect(p, 'shield')) {
+            delete p.effects.shield;
+          } else {
+            killPlayer(p, null);
+            died = true;
+          }
+          break;
+        }
+      }
+
+      // Other snake collision
+      if (!died) {
+        for (const otherId in players) {
+          if (otherId === id) continue;
+          if (died) break;
+          const other = players[otherId];
+          if (!other.alive) continue;
+
+          for (let i = 5; i < other.segments.length; i++) {
+            if (distSq(newHead, other.segments[i]) < collisionRadSq) {
+              if (hasEffect(p, 'shield')) {
+                delete p.effects.shield;
+              } else {
+                other.score += Math.floor(p.segments.length / 3);
+                for (let j = 0; j < Math.floor(p.segments.length / 5); j++) {
+                  const last = other.segments[other.segments.length - 1];
+                  other.segments.push({ x: last.x, y: last.y });
+                }
+                killPlayer(p, other.name);
+                died = true;
               }
-              killPlayer(p, other.name);
-              died = true;
+              break;
             }
-            break; // stop checking this snake's segments
           }
         }
       }
