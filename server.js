@@ -252,11 +252,13 @@ setInterval(() => {
       }
     }
 
-    // Snake collision (ghost = pass through)
-    if (!hasEffect(p, 'ghost')) {
+    // Snake collision (ghost = pass through, never collide with self)
+    if (!hasEffect(p, 'ghost') && p.alive) {
       const collisionRadSq = 16 * 16;
+      let died = false;
       for (const otherId in players) {
-        if (otherId === id) continue;
+        if (otherId === id) continue; // never self-collide
+        if (died) break;
         const other = players[otherId];
         if (!other.alive) continue;
 
@@ -264,6 +266,7 @@ setInterval(() => {
           if (distSq(newHead, other.segments[i]) < collisionRadSq) {
             if (hasEffect(p, 'shield')) {
               delete p.effects.shield;
+              died = false; // shield absorbed the hit
             } else {
               other.score += Math.floor(p.segments.length / 3);
               for (let j = 0; j < Math.floor(p.segments.length / 5); j++) {
@@ -271,8 +274,9 @@ setInterval(() => {
                 other.segments.push({ x: last.x, y: last.y });
               }
               killPlayer(p, other.name);
+              died = true;
             }
-            break;
+            break; // stop checking this snake's segments
           }
         }
       }
