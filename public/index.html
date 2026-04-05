@@ -264,9 +264,9 @@ function getSkinData(){
   return selectedSkin;
 }
 
-function startGame(){socket.emit('join',{name:nameInput.value.trim()||'Gusano',skin:getSkinData()});showGameUI();}
+function startGame(){predictedSegs=null;socket.emit('join',{name:nameInput.value.trim()||'Gusano',skin:getSkinData()});showGameUI();}
 document.getElementById('playBtn').onclick=startGame;
-document.getElementById('playBtn2').onclick=()=>{socket.emit('respawn',{name:nameInput.value.trim()||'Gusano',skin:getSkinData()});showGameUI();};
+document.getElementById('playBtn2').onclick=()=>{predictedSegs=null;socket.emit('respawn',{name:nameInput.value.trim()||'Gusano',skin:getSkinData()});showGameUI();};
 nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
 
 // Desktop input
@@ -323,6 +323,8 @@ socket.on('s',s=>{
   currState=up;stateTime=Date.now();
   leaderboard=(s.lb||[]).map(e=>({name:e.n,score:e.s}));
   lastScore=s.sc;
+  // Reconcile local prediction with server
+  if(up.players[myId]) reconcile(up.players[myId].segments);
 });
 
 socket.on('dead',d=>{
@@ -334,7 +336,68 @@ socket.on('dead',d=>{
   deathScreen.classList.add('show');hideGameUI();
 });
 
-// ── Interpolation ──
+// ── Client-side prediction for local player ──
+const SPEED=3.2,BOOST_SPEED=5.5,SEG_DIST=12;
+let predictedSegs=null; // Local predicted segments
+let predictedAngle=0;
+let lastServerSegs=null;
+
+function angleLerp(a,b,t){
+  let d=b-a;
+  while(d>Math.PI)d-=Math.PI*2;
+  while(d<-Math.PI)d+=Math.PI*2;
+  return a+d*t;
+}
+
+function predictLocal(){
+  if(!predictedSegs||!playing)return;
+  const targetAngle=isTouch?joyAngle:Math.atan2(mouseY-H/2,mouseX-W/2);
+  predictedAngle=angleLerp(predictedAngle,targetAngle,0.12);
+  const spd=boosting?BOOST_SPEED:SPEED;
+  const head=predictedSegs[0];
+  const nh={x:head.x+Math.cos(predictedAngle)*spd,y:head.y+Math.sin(predictedAngle)*spd};
+  // Clamp to world
+  nh.x=Math.max(0,Math.min(WORLD.w,nh.x));
+  nh.y=Math.max(0,Math.min(WORLD.h,nh.y));
+  predictedSegs.unshift(nh);
+  // Follow body
+  for(let i=1;i<predictedSegs.length;i++){
+    const p=predictedSegs[i-1],c=predictedSegs[i];
+    const dx=c.x-p.x,dy=c.y-p.y;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d>SEG_DIST){const r=SEG_DIST/d;c.x=p.x+dx*r;c.y=p.y+dy*r;}
+  }
+  // Keep length
+  while(predictedSegs.length>lastScore+15) predictedSegs.pop();
+}
+
+// Reconcile: smoothly blend prediction toward server state
+function reconcile(serverSegs){
+  if(!predictedSegs){
+    predictedSegs=serverSegs.map(s=>({x:s.x,y:s.y}));
+    return;
+  }
+  // Blend head toward server (soft correction)
+  const blend=0.3;
+  const sh=serverSegs[0],ph=predictedSegs[0];
+  ph.x+=(sh.x-ph.x)*blend;
+  ph.y+=(sh.y-ph.y)*blend;
+  // Match length
+  while(predictedSegs.length<serverSegs.length){
+    const last=predictedSegs[predictedSegs.length-1];
+    predictedSegs.push({x:last.x,y:last.y});
+  }
+  while(predictedSegs.length>serverSegs.length&&predictedSegs.length>5) predictedSegs.pop();
+  // Blend body gently
+  const bodyBlend=0.15;
+  const len=Math.min(predictedSegs.length,serverSegs.length);
+  for(let i=1;i<len;i++){
+    predictedSegs[i].x+=(serverSegs[i].x-predictedSegs[i].x)*bodyBlend;
+    predictedSegs[i].y+=(serverSegs[i].y-predictedSegs[i].y)*bodyBlend;
+  }
+}
+
+// Interpolation for OTHER players only
 function lerp(prev,curr,t){
   if(!prev)return curr;
   const len=Math.min(prev.length,curr.length),out=[];
@@ -516,13 +579,16 @@ function render(){
   ctx.fillStyle='#080816';ctx.fillRect(0,0,W,H);
   if(!currState||!playing)return;
 
-  const t=Math.min((Date.now()-stateTime)/50,1.2);
   const me=currState.players[myId];
   if(!me)return;
 
-  const pm=prevState?prevState.players[myId]:null;
-  const mySegs=lerp(pm?pm.segments:null,me.segments,t);
+  // Run local prediction (60fps movement)
+  predictLocal();
+
+  const mySegs=predictedSegs||me.segments;
   const cx=mySegs[0].x,cy=mySegs[0].y;
+
+  const t=Math.min((Date.now()-stateTime)/50,1.2);
 
   drawGrid(cx,cy);
   drawBorder(cx,cy);
