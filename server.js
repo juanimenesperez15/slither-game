@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const WORLD_W = 2000;
 const WORLD_H = 2000;
 const GAME_TPS = 60;
-const NET_TPS = 20;
+const NET_TPS = 30;
 const FOOD_COUNT = 400;
 const POWERUP_COUNT = 8;
 const SPEED = 3.2;
