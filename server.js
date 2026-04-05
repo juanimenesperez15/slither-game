@@ -35,12 +35,12 @@ const allTimeScores = [];
 
 // Power-up types
 const POWERUP_TYPES = [
-  { type: 'speed',   color: '#FBBF24', icon: 'S', duration: 5000, desc: 'Velocidad x1.5' },
-  { type: 'shield',  color: '#3B82F6', icon: 'E', duration: 4000, desc: 'Escudo temporal' },
-  { type: 'magnet',  color: '#A78BFA', icon: 'M', duration: 6000, desc: 'Imán de comida' },
-  { type: 'x2',      color: '#22C55E', icon: '2', duration: 8000, desc: 'Puntos x2' },
-  { type: 'shrink',  color: '#EF4444', icon: '!', duration: 0,    desc: 'Reduce enemigos' },
-  { type: 'ghost',   color: '#94A3B8', icon: 'G', duration: 4000, desc: 'Atravesar cuerpos' },
+  { type: 'speed',   color: '#FBBF24', icon: '⚡', duration: 5000, desc: 'Velocidad x1.5' },
+  { type: 'shield',  color: '#3B82F6', icon: '🛡️', duration: 4000, desc: 'Escudo temporal' },
+  { type: 'magnet',  color: '#A78BFA', icon: '🧲', duration: 6000, desc: 'Imán de comida' },
+  { type: 'x2',      color: '#22C55E', icon: '✖️2', duration: 8000, desc: 'Puntos x2' },
+  { type: 'shrink',  color: '#EF4444', icon: '💀', duration: 0,    desc: 'Reduce enemigos' },
+  { type: 'ghost',   color: '#94A3B8', icon: '👻', duration: 4000, desc: 'Atravesar cuerpos' },
 ];
 
 function spawnFood() {

@@ -360,8 +360,8 @@ function drawPowerups(pwl,cx,cy){
     var r=pw.r*(1+Math.sin(now*0.005)*0.15);
     ctx.beginPath();ctx.arc(px,py,r+6,0,Math.PI*2);ctx.fillStyle=pw.c;ctx.globalAlpha=0.12;ctx.fill();
     ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fillStyle=pw.c;ctx.globalAlpha=0.85;ctx.fill();
-    ctx.globalAlpha=1;ctx.font="bold 11px 'Space Grotesk',sans-serif";ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle='#080816';ctx.fillText(pw.ic,px,py+1);ctx.textBaseline='alphabetic';}ctx.globalAlpha=1;
+    ctx.globalAlpha=1;ctx.font="14px serif";ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(pw.ic,px,py+1);ctx.textBaseline='alphabetic';}ctx.globalAlpha=1;
 }
 
 function drawBorder(cx,cy){
