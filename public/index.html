@@ -166,7 +166,7 @@
   window.addEventListener('resize', resize);
 
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  const WORLD = { w: 4000, h: 4000 };
+  const WORLD = { w: 2000, h: 2000 };
 
   const socket = io({ transports: ['websocket'] }); // Force websocket, skip polling
   let myId = null;

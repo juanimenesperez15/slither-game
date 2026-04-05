@@ -13,8 +13,8 @@ const io = new Server(server, {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Game config
-const WORLD_W = 4000;
-const WORLD_H = 4000;
+const WORLD_W = 2000;
+const WORLD_H = 2000;
 const GAME_TPS = 60;       // Physics ticks per second
 const NET_TPS = 20;         // Network sends per second
 const FOOD_COUNT = 500;
