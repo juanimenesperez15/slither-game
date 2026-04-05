@@ -202,10 +202,25 @@ function startMatch() {
   lastShrinkTime = Date.now();
   mapSize = MAP_INITIAL;
   initMap();
-  // Spawn all connected players
-  for (var id in players) {
-    var old = players[id];
-    players[id] = createPlayer(id, old.name, old.skin);
+  // Spawn all players in a circle around center, facing outward
+  var ids = Object.keys(players);
+  var count = ids.length;
+  var radius = Math.min(300, mapSize * 0.2);
+  for (var i = 0; i < count; i++) {
+    var old = players[ids[i]];
+    var angleOnCircle = (i / count) * Math.PI * 2;
+    var cx = mapCenter + Math.cos(angleOnCircle) * radius;
+    var cy = mapCenter + Math.sin(angleOnCircle) * radius;
+    var segments = [];
+    // Face outward: head at circle edge, body toward center
+    for (var j = 0; j < START_LENGTH; j++) {
+      segments.push({ x: cx - Math.cos(angleOnCircle) * j * SEGMENT_DIST, y: cy - Math.sin(angleOnCircle) * j * SEGMENT_DIST });
+    }
+    players[ids[i]] = {
+      id: ids[i], name: old.name, skin: sanitizeSkin(old.skin),
+      segments: segments, angle: angleOnCircle, targetAngle: angleOnCircle,
+      boosting: false, score: 0, alive: true, spectating: false, effects: {},
+    };
   }
   io.emit('phase', { phase: 'playing', time: MATCH_TIME });
 }
