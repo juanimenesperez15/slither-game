@@ -615,7 +615,7 @@ function render(){
   if(++lbFrame%6===0){
     document.getElementById('lbList').innerHTML=leaderboard.map((e,i)=>{
       const u=me&&e.name===me.name;
-      return `<div class="lb-entry${u?' you':'"}"><span class="lb-name">${i+1}. ${e.name}</span><span>${e.score}</span></div>`;
+      return `<div class="lb-entry${u?' you':''}"><span class="lb-name">${i+1}. ${e.name}</span><span>${e.score}</span></div>`;
     }).join('');
   }
 
