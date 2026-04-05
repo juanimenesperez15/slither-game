@@ -188,12 +188,12 @@ function showGameUI(){
   document.getElementById('leaderboard').classList.remove('hidden');
   document.getElementById('minimap').classList.remove('hidden');
   document.getElementById('boostBar').classList.remove('hidden');
-  if(isTouch){joystickArea.style.display='block';boostBtn.style.display='flex';}
+  if(isTouch){joystickArea.style.display='block';boostBtn.style.display='flex';if(gyroBtn)gyroBtn.style.display='flex';}
   playing=true;
 }
 function hideGameUI(){
   document.getElementById('hud').classList.add('hidden');
-  if(isTouch){joystickArea.style.display='none';boostBtn.style.display='none';}
+  if(isTouch){joystickArea.style.display='none';boostBtn.style.display='none';if(gyroBtn)gyroBtn.style.display='none';}
 }
 
 function startGame(){
@@ -234,6 +234,60 @@ joystickArea.addEventListener('touchcancel',joyReset);
 canvas.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
 canvas.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
 
+// ── Gyroscope control ──
+var useGyro=false;
+var gyroAngle=0;
+var hasGyro=false;
+
+function enableGyro(){
+  // iOS 13+ requires permission
+  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(function(response){
+      if(response==='granted'){hasGyro=true;useGyro=true;updateGyroUI();}
+    }).catch(function(){});
+  } else {
+    hasGyro=true;useGyro=true;updateGyroUI();
+  }
+}
+
+window.addEventListener('deviceorientation',function(e){
+  if(!useGyro||!playing)return;
+  // beta = front-back tilt (-180 to 180), gamma = left-right tilt (-90 to 90)
+  var gamma=e.gamma||0; // left-right
+  var beta=e.beta||0;   // front-back
+  // Offset so holding phone ~45deg forward is neutral
+  beta=beta-40;
+  // Clamp
+  gamma=Math.max(-45,Math.min(45,gamma));
+  beta=Math.max(-45,Math.min(45,beta));
+  // Convert to angle (gamma=X, beta=Y)
+  gyroAngle=Math.atan2(beta,gamma);
+});
+
+// Toggle button
+var gyroBtn=null;
+function updateGyroUI(){
+  if(!gyroBtn)return;
+  if(useGyro){
+    gyroBtn.style.background='rgba(110,231,183,.3)';gyroBtn.style.borderColor='rgba(110,231,183,.6)';
+    joystickArea.style.opacity='0.3';
+  } else {
+    gyroBtn.style.background='rgba(255,255,255,.05)';gyroBtn.style.borderColor='rgba(255,255,255,.15)';
+    joystickArea.style.opacity='1';
+  }
+}
+if(isTouch){
+  gyroBtn=document.createElement('button');
+  gyroBtn.textContent='🔄';
+  gyroBtn.title='Giroscopio';
+  gyroBtn.style.cssText='position:fixed;bottom:90px;right:12px;z-index:61;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent';
+  gyroBtn.onclick=function(){
+    if(!hasGyro){enableGyro();return;}
+    useGyro=!useGyro;updateGyroUI();
+  };
+  document.body.appendChild(gyroBtn);
+}
+
 // Boost
 var bTouchId=null;
 boostBtn.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();bTouchId=e.changedTouches[0].identifier;boosting=true;boostBtn.classList.add('active');},{passive:false});
@@ -243,7 +297,13 @@ boostBtn.addEventListener('touchcancel',function(){boosting=false;boostBtn.class
 // Send input
 setInterval(function(){
   if(!playing)return;
-  socket.emit('input',{angle:isTouch?joyAngle:Math.atan2(mouseY-H/2,mouseX-W/2),boost:boosting});
+  var a;
+  if(isTouch){
+    a=useGyro?gyroAngle:joyAngle;
+  } else {
+    a=Math.atan2(mouseY-H/2,mouseX-W/2);
+  }
+  socket.emit('input',{angle:a,boost:boosting});
 },33);
 
 // ── Network - double buffer for smooth interpolation ──
