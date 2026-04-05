@@ -228,7 +228,8 @@ function hideGameUI(){
 }
 
 function startGame(){
-  serverState=null;displayBuf={};
+  serverState=null;displayBuf={};isSpectating=false;
+  document.getElementById('specBanner').style.display='none';
   socket.emit('join',{name:nameInput.value.trim()||'Gusano',skin:myColors.join(',')});
   showGameUI();
 }
@@ -369,17 +370,28 @@ socket.on('phase',function(d){
   var title=document.getElementById('phaseTitle');
   var msg=document.getElementById('phaseMsg');
   if(d.phase==='lobby'){
+    // Show menu again so player can change name/skin/controls
     overlay.classList.remove('show');
+    playing=false;isSpectating=false;serverState=null;displayBuf={};
+    menu.classList.remove('hidden');
+    deathScreen.classList.remove('show');
+    document.getElementById('specBanner').style.display='none';
+    hideGameUI();
   } else if(d.phase==='playing'){
+    // Flash "battle starts" then hide — auto show game UI
     overlay.classList.add('show');
     title.textContent='BATALLA COMIENZA';title.style.color='#6EE7B7';
     msg.textContent='Sobrevive!';
+    document.getElementById('specBanner').style.display='none';
+    isSpectating=false;displayBuf={};
+    showGameUI();
     setTimeout(function(){overlay.classList.remove('show');},2000);
   } else if(d.phase==='ended'){
     overlay.classList.add('show');
     if(d.winner){title.textContent='GANADOR: '+d.winner.name;title.style.color='#F59E0B';msg.textContent='Largo: '+d.winner.score;}
     else{title.textContent='PARTIDA TERMINADA';title.style.color='#EF4444';msg.textContent='';}
     playing=false;
+    document.getElementById('specBanner').style.display='none';
   }
 });
 
